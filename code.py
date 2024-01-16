@@ -146,66 +146,67 @@ while True:
         y = MIN_TILT
 
     ## Apply modifiers
-    if (AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == LOW) or mode == "vs": ## We d-pad now 
-        if x == MIN_TILT:
-            if y == MIN_TILT:
-                gp.set_dpad(HAT_UP_LEFT)
-            elif y == CENTER:
-                gp.set_dpad(HAT_LEFT)
-            elif y == MAX_TILT:
-                gp.set_dpad(HAT_DOWN_LEFT)
-        elif x == CENTER:
-            if y == MIN_TILT:
-                gp.set_dpad(HAT_UP)
-            elif y == CENTER:
-                gp.set_dpad(HAT_CENTER)
-            elif y == MAX_TILT:
-                gp.set_dpad(HAT_DOWN)
-        if x == MAX_TILT:
-            if y == MIN_TILT:
-                gp.set_dpad(HAT_UP_RIGHT)
-            elif y == CENTER:
-                gp.set_dpad(HAT_RIGHT)
-            elif y == MAX_TILT:
-                gp.set_dpad(HAT_DOWN_RIGHT)
-        gp.set_lsx(CENTER)
-        gp.set_lsy(CENTER)
-    else:
-        gp.set_dpad(HAT_CENTER)
-        if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
+    if len(AllButtons["modifiers"]) > 0:
+        if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == LOW: ## We d-pad now 
             if x == MIN_TILT:
-                x = int(127 - (126 * 2/3))
-            elif x == MAX_TILT:
-                x = int(127 + (126 * 2/3))
-            else:
-                pass
+                if y == MIN_TILT:
+                    gp.set_dpad(HAT_UP_LEFT)
+                elif y == CENTER:
+                    gp.set_dpad(HAT_LEFT)
+                elif y == MAX_TILT:
+                    gp.set_dpad(HAT_DOWN_LEFT)
+            elif x == CENTER:
+                if y == MIN_TILT:
+                    gp.set_dpad(HAT_UP)
+                elif y == CENTER:
+                    gp.set_dpad(HAT_CENTER)
+                elif y == MAX_TILT:
+                    gp.set_dpad(HAT_DOWN)
+            if x == MAX_TILT:
+                if y == MIN_TILT:
+                    gp.set_dpad(HAT_UP_RIGHT)
+                elif y == CENTER:
+                    gp.set_dpad(HAT_RIGHT)
+                elif y == MAX_TILT:
+                    gp.set_dpad(HAT_DOWN_RIGHT)
+            gp.set_lsx(CENTER)
+            gp.set_lsy(CENTER)
+        else:
+            gp.set_dpad(HAT_CENTER)
+            if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
+                if x == MIN_TILT:
+                    x = int(127 - (126 * 2/3))
+                elif x == MAX_TILT:
+                    x = int(127 + (126 * 2/3))
+                else:
+                    pass
 
-            if y == MIN_TILT:
-                y = int(127 - (126 * 2/3))
-            elif y == MAX_TILT:
-                y = int(127 + (126 * 2/3))
-            else:
-                pass
-        elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
-            if x == MIN_TILT:
-                x = int(127 - (126 * 1/3))
-            elif x == MAX_TILT:
-                x = int(127 + (126 * 1/3))
-            else:
-                pass
+                if y == MIN_TILT:
+                    y = int(127 - (126 * 2/3))
+                elif y == MAX_TILT:
+                    y = int(127 + (126 * 2/3))
+                else:
+                    pass
+            elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                if x == MIN_TILT:
+                    x = int(127 - (126 * 1/3))
+                elif x == MAX_TILT:
+                    x = int(127 + (126 * 1/3))
+                else:
+                    pass
 
-            if y == MIN_TILT:
-                y = int(127 - (126 * 1/3))
-            elif y == MAX_TILT:
-                y = int(127 + (126 * 1/3))
-            else:
-                pass
-        gp.set_lsx(x)
-        gp.set_lsy(y)
+                if y == MIN_TILT:
+                    y = int(127 - (126 * 1/3))
+                elif y == MAX_TILT:
+                    y = int(127 + (126 * 1/3))
+                else:
+                    pass
+    gp.set_lsx(x)
+    gp.set_lsy(y)
 
     # Right stick
-    ## X axis
     if len(AllButtons["rightAnalog"]) > 0:
+        ## X axis
         if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
             z = MIN_TILT
         elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
