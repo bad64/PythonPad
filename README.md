@@ -1,4 +1,4 @@
-[![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://github.com/Naereen/badges/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Static Badge](https://img.shields.io/badge/CircuitPython-orange)
+[![Open Source? Yes!](https://badgen.net/badge/Open%20Source%20%3F/Yes%21/blue?icon=github)](https://github.com/Naereen/badges/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Static Badge](https://img.shields.io/badge/CircuitPython-orange)](https://github.com/adafruit/circuitpython)
 
 # CircuitPython based all buttons all purpose (but mostly Smash) controller firmware
 
@@ -10,13 +10,14 @@ This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/mai
 
 This is supposed to be the followup to my Pico-SDK based PicoPad. It features:
 
-- Human-readable and customizable keybindings
-- Code that is (allegedly) easier to maintain and extend
+- Human-readable and customizable keybindings, without needing to recompile or go through a web-based UI
+- Code that is (allegedly\*) easier to maintain and extend
 - Far more verbose error reporting
+- Portability to any device that supports CircuitPython
 
 Surely there must be some huge tradeoffs compared to C, right ?
 
-- It boots slightly slower (around 5 seconds)
+- It boots slightly slower (around 5 seconds on a Pico W)
 - ...no really that's it
 
 As far as I can tell it doesn't lag noticeably behind the C version -- someone with a better setup than mine might want to test that, because I cannot !
@@ -26,7 +27,7 @@ As far as I can tell it doesn't lag noticeably behind the C version -- someone w
 Depends on:
 
 - CircuitPython >= 8.2.9
-- adafruit\_hid (available in the Adafruit MPY bundle)
+- adafruit\_hid (available in the [CircuitPython Library Bundle](https://circuitpython.org/libraries))
 - adafruit\_ticks.mpy (same as above)
 
 Flash the CircuitPython UF2 file to your microcontroller, then extract the libs (that is both the MPY file and the entire `adafruit_hid` folder) to the `lib` directory of your CircuitPython drive. If you're having doubts, I suggest clicking on the CircuitPython badge and follow their installation guide, though it will give you about the same steps.
