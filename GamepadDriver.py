@@ -44,7 +44,7 @@ def range_map(x, in_min, in_max, out_min, out_max):
 def fits_in_1b(value):
     a = bytearray(1)
     try:
-        struct.pack_into("<b", a, 0, value)
+        struct.pack_into("<B", a, 0, value)
         return "Fits in 1 byte"
     except:
         return "Doesn't fit in 1 byte ??"
@@ -52,7 +52,7 @@ def fits_in_1b(value):
 def fits_in_2b(value):
     a = bytearray(2)
     try:
-        struct.pack_into("<b", a, 0, value)
+        struct.pack_into("<H", a, 0, value)
         return "Fits in 2 bytes"
     except:
         return "Doesn't fit in 2 bytes ??"
@@ -79,11 +79,11 @@ class Gamepad:
         # Store settings separately before putting into report. Saves code
         # especially for buttons.
         self._buttons_state = 0
-        self._hat = 0
-        self._joy_x = 0
-        self._joy_y = 0
-        self._joy_z = 0
-        self._joy_rz = 0
+        self._hat = 255
+        self._joy_x = 127
+        self._joy_y = 127
+        self._joy_z = 127
+        self._joy_rz = 127
 
         # Send an initial report to test if HID device is ready.
         # If not, wait a bit and try once more.
@@ -136,8 +136,8 @@ class Gamepad:
         if report:
             print("Report: ", end="")
             
-            if type(report) == bytes:
-                print("bytearray")
+            if type(report) == bytes or type(report) == bytearray:
+                print("bytes")
                 
                 print(RED, end="")
                 print("{0:08b}".format(report[0]), end="")
@@ -163,9 +163,9 @@ class Gamepad:
             else:
                 print(type(report))
                 print(RED, end="")
-                buf = "{0:056b}".format(int.from_bytes(report, 'little'))
+                buf = "{0:064b}".format(int.from_bytes(report, 'little'))
 
-                for i in range(0, 56):
+                for i in range(0, 64):
                     if i == OFFSET_BUTTONS-8:
                         print(YELLOW, end="")
                     elif i == OFFSET_HAT-8:
@@ -211,11 +211,11 @@ class Gamepad:
 
     def reset_all(self):
         self._buttons_state = 0
-        self._hat = 0
-        self._joy_x = 0
-        self._joy_y = 0
-        self._joy_z = 0
-        self._joy_rz = 0
+        self._hat = 255
+        self._joy_x = 127
+        self._joy_y = 127
+        self._joy_z = 127
+        self._joy_rz = 127
         self.send(always=True)
 
     def send(self, always=False):
