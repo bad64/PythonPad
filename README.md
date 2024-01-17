@@ -34,8 +34,8 @@ Flash the CircuitPython UF2 file to your microcontroller, then extract the libs 
 
 *Then* drag and drop the main files into the drive. Unplug and replug your device to make it run `boot.py` again.
 
-[!IMPORTANT]
-Your device ***must*** reload `boot.py`. The easiest way to achieve this is unplugging and replugging, but different boards might have different ways to achieve this.
+> [!IMPORTANT]
+> Your device ***must*** reload `boot.py`. The easiest way to achieve this is unplugging and replugging, but different boards might have different ways to achieve this.
 
 ## But how it do tho ?
 
@@ -48,8 +48,8 @@ Once you're all set up, when plugged into a computer, it will show up as both a 
 
 The file consists of pairs of keys and values (as most JSON files tend to be written as, at a surface level anyway). The keys are pin numbers (again, relative to the RP2040 and my own Hydra board; adapt to your own use), and the values correspond to which input is tied to that particular pin. This technically means you can tie an input to more than one pin, but one pin cannot trigger more than one input (nor is that a desirable feature, according to some rulesets. Consult your local TO for advice before use)
 
-[!NOTE]
-Said inputs follow the mapping of the Switch Pro Controller. Please be careful if you're more used to the Xbox mapping; face buttons are horizontally inverted (Y on the SPC is X on Xbox controllers, B on the SPC is A on Xbox, etc), L and R are LB and RB respectively, START is MENU and SELECT is BACK. C\_\* inputs correspond to the right stick (*not R3*, just directions on the right stick). MOD\_X and MOD\_Y don't exist on either controller and kinda do their own thing.
+> [!NOTE]
+> Said inputs follow the mapping of the Switch Pro Controller. Please be careful if you're more used to the Xbox mapping; face buttons are horizontally inverted (Y on the SPC is X on Xbox controllers, B on the SPC is A on Xbox, etc), L and R are LB and RB respectively, START is MENU and SELECT is BACK. C\_\* inputs correspond to the right stick (*not R3*, just directions on the right stick). MOD\_X and MOD\_Y don't exist on either controller and kinda do their own thing.
 
 In short: Edit `config.json` to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01) <sub>Really this decision leads to way more backdoors than you think it does</sub>
 
