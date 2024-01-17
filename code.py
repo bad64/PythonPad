@@ -36,42 +36,22 @@ MASK_CAPTURE =       0b0010000000000000
 MASK_UNUSED1 =       0b0100000000000000
 MASK_UNUSED2 =       0b1000000000000000
 
-MASK_FGC_1P = MASK_Y
-MASK_FGC_2P = MASK_X
-MASK_FGC_3P = MASK_R
-MASK_FGC_4P = MASK_L
-MASK_FGC_1K = MASK_B
-MASK_FGC_2K = MASK_A
-MASK_FGC_3K = MASK_ZR
-MASK_FGC_4K = MASK_ZL
-
 # WTAF is a button
 class Button:
     def __init__(self, pin, mappedInput):
-        self._pin = [ int(pin) ]
-        self._mappedInput = mappedInput
-        self._mask = None
-        # Set up actual i/o layer
-        self._io = [ eval("digitalio.DigitalInOut(board.GP{})".format(self._pin[0])) ]
+        self._pins = [ int(pin) ]
+        try:
+            self._mask = eval("MASK_{}".format(mappedInput))
+        except:
+            self._mask = None
+        self._io = [ eval("digitalio.DigitalInOut(board.GP{})".format(int(pin))) ]
         self._io[0].switch_to_input()
         self._io[0].pull = digitalio.Pull.UP
-        if self._mappedInput in [ "UP", "DOWN", "LEFT", "RIGHT", "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT", "MOD_X", "MOD_Y" ]:
-            self._mask = None
-        elif self._mappedInput == None:
-            self._mask = None
-        else:
-            self._mask = eval("MASK_{}".format(self._mappedInput))
-    def getPins(self):
-        return self._pin
     def addPin(self, pin):
-        self._pin.append(pin)
-        self._io.append(eval("digitalio.DigitalInOut(board.GP{})".format(pin)))
+        self._pins.append(pin)
+        self._io.append(eval("digitalio.DigitalInOut(board.GP{})".format(int(pin))))
         self._io[-1].switch_to_input()
         self._io[-1].pull = digitalio.Pull.UP
-    def input(self):
-        return self._mappedInput
-    def io(self):
-        return self._io
     def read(self):
         for io in self._io:
             if io.value == False:
@@ -98,70 +78,73 @@ for k,v in cfg["modes"].items():
             microcontroller.reset()
         else:
             mode = v
-    b._io.deinit()
+    b._io[0].deinit()  # Free the io pin for rebinding later
 
 # Bind all inputs
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
 
 print(f"Loading config: \"{mode}\"")
+
 for k,v in cfg[mode].items():
     if v != "None":
         if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
-            if not AllButtons["leftAnalog"][v]:
-                AllButtons["leftAnalog"][v] = Button(k, v)
-            else:
+            try:
                 AllButtons["leftAnalog"][v].addPin(k)
+            except KeyError:
+                AllButtons["leftAnalog"][v] = Button(k, v)
         elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
-            if not AllButtons["rightAnalog"][v]:
-                AllButtons["rightAnalog"][v] = Button(k, v)
-            else:
+            try:
                 AllButtons["rightAnalog"][v].addPin(k)
+            except KeyError:
+                AllButtons["rightAnalog"][v] = Button(k, v)
         elif v in [ "MOD_X", "MOD_Y" ]:
-            if not AllButtons["modifiers"][v]:
-                AllButtons["modifiers"][v] = Button(k, v)
-            else:
+            try:
                 AllButtons["modifiers"][v].addPin(k)
+            except KeyError:
+                AllButtons["modifiers"][v] = Button(k, v)
         else:
             AllButtons["buttons"].append(Button(k, v))
         print(f"Bound key \"{v}\" to input on pin {k}")
+
 
 # We're good to go, enter loop
 print("PythonPad starts !")
 
 while True:
     # Buttons
+    ## This is shared between all modes
     gp.reset_buttons()
 
     for b in AllButtons["buttons"]:
         if b.read() == LOW:
             gp.press_button(b.mask())
 
-    # Left stick
     x = CENTER
     y = CENTER
     z = CENTER
     rz = CENTER
 
-    ## X axis
-    if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-        x = MIN_TILT
-    elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-        x = CENTER
-    elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-        x = MAX_TILT
-    ## Y axis
-    if AllButtons["leftAnalog"]["UP"].read() == LOW and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
-        y = MIN_TILT
-    elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
-        y = CENTER
-    elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == LOW:
-        y = MAX_TILT
-    else:
-        y = MIN_TILT
+    if mode == "smash":
+        # Left stick
+        ## X axis
+        if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+            x = MIN_TILT
+        elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+            x = CENTER
+        elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
+            x = MAX_TILT
+        ## Y axis
+        if AllButtons["leftAnalog"]["UP"].read() == LOW and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
+            y = MIN_TILT
+        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
+            y = CENTER
+        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == LOW:
+            y = MAX_TILT
+        else:
+            y = MIN_TILT
 
-    ## Apply modifiers
-    if len(AllButtons["modifiers"]) > 0:
-        if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == LOW: ## We d-pad now 
+        ## Apply modifiers
+        if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == LOW: ## We d-pad now
             if x == MIN_TILT:
                 if y == MIN_TILT:
                     gp.set_dpad(HAT_UP_LEFT)
@@ -215,11 +198,10 @@ while True:
                     y = int(127 + (126 * 1/3))
                 else:
                     pass
-    gp.set_lsx(x)
-    gp.set_lsy(y)
+        gp.set_lsx(x)
+        gp.set_lsy(y)
 
-    # Right stick
-    if len(AllButtons["rightAnalog"]) > 0:
+        # Right stick
         ## X axis
         if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
             z = MIN_TILT
@@ -237,7 +219,36 @@ while True:
         elif AllButtons["rightAnalog"]["C_UP"].read() == HIGH and AllButtons["rightAnalog"]["C_DOWN"].read() == LOW:
             rz = MAX_TILT
 
-    gp.set_rsx(z)
-    gp.set_rsy(rz)
+        gp.set_rsx(z)
+        gp.set_rsy(rz)
+
+    elif mode == "versus":
+        gp.set_lsx(x)
+        gp.set_lsy(y)
+        gp.set_rsx(z)
+        gp.set_rsy(rz)
+
+        # Left stick(/Dpad)
+        if AllButtons["leftAnalog"]["UP"].read() == LOW:
+            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+                gp.set_dpad(HAT_UP_LEFT)
+            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+                gp.set_dpad(HAT_UP)
+            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
+                gp.set_dpad(HAT_UP_RIGHT)
+        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
+            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+                gp.set_dpad(HAT_LEFT)
+            elif (AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH) or (AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == LOW):
+                gp.set_dpad(HAT_CENTER)
+            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
+                gp.set_dpad(HAT_RIGHT)
+        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == LOW:
+            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+                gp.set_dpad(HAT_DOWN_LEFT)
+            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
+                gp.set_dpad(HAT_DOWN)
+            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
+                gp.set_dpad(HAT_DOWN_RIGHT)
 
     gp.send()
