@@ -48,30 +48,35 @@ MASK_FGC_4K = MASK_ZL
 # WTAF is a button
 class Button:
     def __init__(self, pin, mappedInput):
-        self._pin = int(pin)
+        self._pin = [ int(pin) ]
         self._mappedInput = mappedInput
         self._mask = None
         # Set up actual i/o layer
-        self._io = eval("digitalio.DigitalInOut(board.GP{})".format(self._pin))
-        self._io.switch_to_input()
-        self._io.pull = digitalio.Pull.UP
+        self._io = [ eval("digitalio.DigitalInOut(board.GP{})".format(self._pin[0])) ]
+        self._io[0].switch_to_input()
+        self._io[0].pull = digitalio.Pull.UP
         if self._mappedInput in [ "UP", "DOWN", "LEFT", "RIGHT", "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT", "MOD_X", "MOD_Y" ]:
             self._mask = None
         elif self._mappedInput == None:
             self._mask = None
         else:
             self._mask = eval("MASK_{}".format(self._mappedInput))
-    def getPinNumber(self):
+    def getPins(self):
         return self._pin
+    def addPin(self, pin):
+        self._pin.append(pin)
+        self._io.append(eval("digitalio.DigitalInOut(board.GP{})".format(pin)))
+        self._io[-1].switch_to_input()
+        self._io[-1].pull = digitalio.Pull.UP
     def input(self):
         return self._mappedInput
     def io(self):
         return self._io
     def read(self):
-        if self._io.value == False:
-            return LOW
-        else:
-            return HIGH
+        for io in self._io:
+            if io.value == False:
+                return LOW
+        return HIGH
     def mask(self):
         return self._mask
 
@@ -102,11 +107,20 @@ print(f"Loading config: \"{mode}\"")
 for k,v in cfg[mode].items():
     if v != "None":
         if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
-            AllButtons["leftAnalog"][v] = Button(k, v)
+            if not AllButtons["leftAnalog"][v]:
+                AllButtons["leftAnalog"][v] = Button(k, v)
+            else:
+                AllButtons["leftAnalog"][v].addPin(k)
         elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
-            AllButtons["rightAnalog"][v] = Button(k, v)
+            if not AllButtons["rightAnalog"][v]:
+                AllButtons["rightAnalog"][v] = Button(k, v)
+            else:
+                AllButtons["rightAnalog"][v].addPin(k)
         elif v in [ "MOD_X", "MOD_Y" ]:
-            AllButtons["modifiers"][v] = Button(k, v)
+            if not AllButtons["modifiers"][v]:
+                AllButtons["modifiers"][v] = Button(k, v)
+            else:
+                AllButtons["modifiers"][v].addPin(k)
         else:
             AllButtons["buttons"].append(Button(k, v))
         print(f"Bound key \"{v}\" to input on pin {k}")
