@@ -51,6 +51,9 @@ The file consists of pairs of keys and values (as most JSON files tend to be wri
 > [!NOTE]
 > Said inputs follow the mapping of the Switch Pro Controller. Please be careful if you're more used to the Xbox mapping; face buttons are horizontally inverted (Y on the SPC is X on Xbox controllers, B on the SPC is A on Xbox, etc), L and R are LB and RB respectively, START is MENU and SELECT is BACK. C\_\* inputs correspond to the right stick (*not R3*, just directions on the right stick). MOD\_X and MOD\_Y don't exist on either controller and kinda do their own thing.
 
+> [!NOTE]
+> TODO: Write about inputs and how to configure them in more detail
+
 In short: Edit `config.json` to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01) <sub>Really this decision leads to way more backdoors than you think it does</sub>
 
 [^1]: I do miss pointers though...
