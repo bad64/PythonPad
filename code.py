@@ -6,7 +6,7 @@ import json
 import microcontroller
 import usb_hid
 
-from GamepadDriver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER
+from GamepadDriver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, DEFAULT
 gp = Gamepad(usb_hid.devices)
 
 # Defining physical states
@@ -94,27 +94,101 @@ AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": 
 
 print(f"Loading config: \"{mode}\"")
 
-for k,v in cfg[mode].items():
-    if v != "None":
-        if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
-            try:
-                AllButtons["leftAnalog"][v].addPin(k)
-            except KeyError:
-                AllButtons["leftAnalog"][v] = Button(k, v)
-        elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
-            try:
-                AllButtons["rightAnalog"][v].addPin(k)
-            except KeyError:
-                AllButtons["rightAnalog"][v] = Button(k, v)
-        elif v in [ "MOD_X", "MOD_Y" ]:
-            try:
-                AllButtons["modifiers"][v].addPin(k)
-            except KeyError:
-                AllButtons["modifiers"][v] = Button(k, v)
-        else:
-            AllButtons["buttons"].append(Button(k, v))
-        print(f"Bound key \"{v}\" to input on pin {k}")
+## Save cycles (lmao as if that was needed) by precalculating tilt values
+xAxisModXDelta = CENTER - round(CENTER * (2/3))
+xAxisModYDelta = CENTER - round(CENTER * (1/3))
+yAxisModXDelta = CENTER - round(CENTER * (2/3))
+yAxisModYDelta = CENTER - round(CENTER * (1/3))
 
+modifiedXAxis = False
+modifiedYAxis = False
+
+for k,v in cfg[mode].items():
+    if k == "X_AXIS_MOD_X_DELTA":
+        modifiedXAxis = True
+        try:
+            xAxisModXDelta = round(int(eval(v)))
+            print(f"Set X axis MOD_X delta to {round(eval(v))}")
+        except Exception as e:
+            if 'message' in dir(e):
+                print(f"{RED}Cannot set X axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
+            else:
+                print(f"{RED}Cannot set X axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
+    elif k == "X_AXIS_MOD_Y_DELTA":
+        modifiedXAxis = True
+        try:
+            xAxisModYDelta = round(int(eval(v)))
+            print(f"Set X axis MOD_Y delta to {round(eval(v))}")
+        except Exception as e:
+            if 'message' in dir(e):
+                print(f"{RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
+            else:
+                print(f"{RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
+    elif k == "Y_AXIS_MOD_X_DELTA":
+        modifiedYAxis = True
+        try:
+            yAxisModXDelta = round(int(eval(v)))
+            print(f"Set Y axis MOD_X delta to {round(eval(v))}")
+        except Exception as e:
+            if 'message' in dir(e):
+                print(f"{RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
+            else:
+                print(f"{RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
+    elif k == "Y_AXIS_MOD_Y_DELTA":
+        modifiedYAxis = True
+        try:
+            yAxisModYDelta = round(int(eval(v)))
+            print(f"Set Y axis MOD_Y delta to {round(eval(v))}")
+        except Exception as e:
+            if 'message' in dir(e):
+                print(f"{RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
+            else:
+                print(f"{RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
+
+if modifiedXAxis:
+    print("New X axis values:")
+    print(f"    LEFT:           {MIN_TILT}")
+    print(f"    LEFT MOD_X:     {round(CENTER - xAxisModXDelta)}")
+    print(f"    LEFT MOD_Y:     {round(CENTER - xAxisModYDelta)}")
+    print(f"    CENTER:         {CENTER}")
+    print(f"    RIGHT MOD_Y:    {round(CENTER + xAxisModYDelta)}")
+    print(f"    RIGHT MOD_X:    {round(CENTER + xAxisModXDelta)}")
+    print(f"    RIGHT:          {MAX_TILT}")
+
+if modifiedYAxis:
+    print("New Y axis values:")
+    print(f"    UP:             {MIN_TILT}")
+    print(f"    UP MOD_X:       {round(CENTER - yAxisModXDelta)}")
+    print(f"    UP MOD_Y:       {round(CENTER - yAxisModYDelta)}")
+    print(f"    CENTER:         {CENTER}")
+    print(f"    DOWN MOD_Y:     {round(CENTER + yAxisModYDelta)}")
+    print(f"    DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
+    print(f"    DOWN:           {MAX_TILT}")
+
+for k,v in cfg[mode].items():
+    try:
+        int(k)  # If the key isn't an int it's a modifier value
+        if v != "None":
+            if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
+                try:
+                    AllButtons["leftAnalog"][v].addPin(k)
+                except KeyError:
+                    AllButtons["leftAnalog"][v] = Button(k, v)
+            elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
+                try:
+                    AllButtons["rightAnalog"][v].addPin(k)
+                except KeyError:
+                    AllButtons["rightAnalog"][v] = Button(k, v)
+            elif v in [ "MOD_X", "MOD_Y" ]:
+                try:
+                    AllButtons["modifiers"][v].addPin(k)
+                except KeyError:
+                    AllButtons["modifiers"][v] = Button(k, v) 
+            else:
+                AllButtons["buttons"].append(Button(k, v))
+            print(f"Bound key \"{v}\" to input on pin {k}")
+    except:
+        pass
 
 # We're good to go, enter loop
 print("PythonPad starts !")
@@ -181,34 +255,34 @@ while True:
             gp.set_dpad(HAT_CENTER)
             if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
                 if x == MIN_TILT:
-                    x = int(127 - (126 * 2/3))
+                    x = CENTER - xAxisModXDelta
                 elif x == MAX_TILT:
-                    x = int(127 + (126 * 2/3))
+                    x = CENTER + xAxisModXDelta
                 else:
                     pass
 
                 if y == MIN_TILT:
-                    y = int(127 - (126 * 2/3))
+                    y = CENTER - yAxisModXDelta
                 elif y == MAX_TILT:
-                    y = int(127 + (126 * 2/3))
+                    y = CENTER + yAxisModXDelta
                 else:
                     pass
             elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
                 if x == MIN_TILT:
-                    x = int(127 - (126 * 1/3))
+                    x = CENTER - xAxisModYDelta
                 elif x == MAX_TILT:
-                    x = int(127 + (126 * 1/3))
+                    x = CENTER + xAxisModYDelta
                 else:
                     pass
 
                 if y == MIN_TILT:
-                    y = int(127 - (126 * 1/3))
+                    y = CENTER - yAxisModYDelta
                 elif y == MAX_TILT:
-                    y = int(127 + (126 * 1/3))
+                    y = CENTER + yAxisModYDelta
                 else:
                     pass
-        gp.set_lsx(x)
-        gp.set_lsy(y)
+            gp.set_lsx(x)
+            gp.set_lsy(y)
 
         # Right stick
         ## X axis
