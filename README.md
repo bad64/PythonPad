@@ -51,15 +51,15 @@ The file consists of pairs of keys and values (as most JSON files tend to be wri
 > [!IMPORTANT]
 > Said inputs follow the mapping of the Switch Pro Controller. Please be careful if you're more used to the Xbox mapping:
 > (From Switch Pro Controller to Xbox mappings)
-> Y <-> X
-> B <-> A
-> R -> RB
-> ZR -> RT
-> L -> LB
-> ZL -> LT
-> + (aka START in the config file) -> Share
-> - (aka SELECT in the config file) -> View
-> HOME -> giant Xbox button type thing 
+> * Y <-> X
+> * B <-> A
+> * R -> RB
+> * ZR -> RT
+> * L -> LB
+> * ZL -> LT
+> * \+ (aka START in the config file) -> Share
+> * \- (aka SELECT in the config file) -> View
+> * HOME -> giant Xbox button type thing 
 
 If you want to change an input, pick a pin, then assign it one of the Switch Pro Controller inputs as outlined above. Save the file; CircuitPython should automatically reload everything and you're good to go.
 
