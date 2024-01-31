@@ -32,7 +32,7 @@ Depends on:
 
 Flash the CircuitPython UF2 file to your microcontroller, then extract the libs (that is both the MPY file and the entire `adafruit_hid` folder) to the `lib` directory of your CircuitPython drive. If you're having doubts, I suggest clicking on the CircuitPython badge at the top of this README, and follow their installation guide, though it will give you basically the same steps.
 
-*Then* drag and drop the main files into the drive. Unplug and replug your device to make it run `boot.py` again.
+*Then* drag and drop the main files (see below) into the drive. Unplug and replug your device to make it run `boot.py` again.
 
 > [!IMPORTANT]
 > Your device ***must*** reload `boot.py`. The easiest way to achieve this is unplugging and replugging, but different boards might have different ways to achieve this.
@@ -64,7 +64,7 @@ The file consists of pairs of keys and values (as most JSON files tend to be wri
 
 If you want to change an input, pick a pin, then assign it one of the Switch Pro Controller inputs as outlined above. Save the file; CircuitPython should automatically reload everything and you're good to go. For the Versus mode, you can use dedicated macros that correspond to a traditional arcade controller input scheme using the prefix "VS\_" (i.e.: VS\_1P, VS\_2K and so forth)
 
-## Oh yeah there's a traditional FGC mode too
+## Oh yeah there's a traditional versus fighting mode too
 
 Hold the key corresponding to the "A" input while plugging your board. After a few seconds, the firmware will boot into "Versus mode", which is just a mode where inputs are remapped for a better 2D fighting game experience[^3]:
 
@@ -76,6 +76,20 @@ Hold the key corresponding to the "A" input while plugging your board. After a f
 
 > [!NOTE]
 > In short: Edit `config.json` with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
+
+## Updating the firmware
+
+Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading that file again)
+
+## Extending the firmware with new modes
+
+> [!WARNING]
+> This is for advanced users/tinkerers/people that already have a solid understanding of Python.
+> 
+> I may have made the underlying framework easy to use, but that comes at the cost of safety features. You shouldn't be able to actually brick your microcontroller (*hopefully*) from within CircuitPython, but I would keep backups on hand before any modification if I were you.
+
+> [!NOTE]
+> TODO
 
 [^1]: I do miss pointers though...
 [^2]: Expect someone to slap it on a ESP32-S3. That someone might be me. *Might*.
