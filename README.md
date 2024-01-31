@@ -50,6 +50,7 @@ The file consists of pairs of keys and values (as most JSON files tend to be wri
 
 > [!IMPORTANT]
 > Said inputs follow the mapping of the Switch Pro Controller. Please be careful if you're more used to the Xbox mapping:
+>
 > (From Switch Pro Controller to Xbox mappings)
 > * Y <-> X
 > * B <-> A
@@ -65,13 +66,13 @@ If you want to change an input, pick a pin, then assign it one of the Switch Pro
 
 ## Oh yeah there's a traditional FGC mode too
 
-Hold the key corresponding to the "A" input while plugging your board. After a few seconds, the firmware will boot into "Versus mode", which is just a mode where inputs are remapped for a better 2D fighting game experience[^2]:
+Hold the key corresponding to the "A" input while plugging your board. After a few seconds, the firmware will boot into "Versus mode", which is just a mode where inputs are remapped for a better 2D fighting game experience[^3]:
 
 * Action buttons try to emulate the button placements on a traditional box
 * Non-existent keys (typically both modifiers along with C-Down and A) map to the Up directional to approximate placement of said direction on a more well known button layout
 * All directional inputs are considered d-pad inputs instead of analog
-* C-stick gets yoten[^3]
-* SOCD gets resolved to LRN & UDU[^4][^5]
+* C-stick gets yoten[^4]
+* SOCD gets resolved to LRN & UDU[^5][^6]
 
 > [!NOTE]
 > In short: Edit `config.json` with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
