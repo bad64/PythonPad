@@ -36,12 +36,12 @@ MASK_CAPTURE =      0b0010000000000000
 MASK_UNUSED1 =      0b0100000000000000
 MASK_UNUSED2 =      0b1000000000000000
 
-MASK_VS_1P =        MASK_X
-MASK_VS_2P =        MASK_Y
+MASK_VS_1P =        MASK_Y
+MASK_VS_2P =        MASK_X
 MASK_VS_3P =        MASK_R
 MASK_VS_4P =        MASK_ZL
-MASK_VS_1K =        MASK_A
-MASK_VS_2K =        MASK_B
+MASK_VS_1K =        MASK_B
+MASK_VS_2K =        MASK_A
 MASK_VS_3K =        MASK_L
 MASK_VS_4K =        MASK_ZR
 
@@ -207,6 +207,7 @@ while True:
     z = CENTER
     rz = CENTER
 
+    ## This is where you should add alternate modes
     if mode == "smash":
         # Left stick
         ## X axis
