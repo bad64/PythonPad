@@ -2,8 +2,15 @@
 
 # CircuitPython based all buttons all purpose (but mostly Smash) controller firmware
 
-This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) controller !
----
+This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) controller !  
+Here's what has been tested so far:
+
+| Board | MCU | Works ? | Comments
+| --- | --- | --- | --- | 
+| Raspberry Pi Pico | RP2040 | &#9989; | Literally made for it |
+| ESP32-S3-DevKitC-1-N8R2 | ESP32-S3 | &#9989; | |
+| Adafruit Feather ESP32-S3 | ESP32-S3 | &#9989; | Tested on the 4MB Flash model|
+
 ## What it do
 
 This is supposed to be the followup to my Pico-SDK based PicoPad. It features:
@@ -75,7 +82,6 @@ Hold the key corresponding to the "A" input while plugging your board. After a f
 > [!NOTE]
 > In short: Edit `config.json` with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
 
----
 ## Updating the firmware
 
 Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading that file again)
@@ -93,7 +99,6 @@ The first part is arguably the easiest one: Edit `config.json`; Add a new entry 
 
 Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^8]. Add your mode name to the conditional. And this is basically where I can no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
 
----
 ## Troubleshooting/FAQ
 
 Q: My gamepad stopped responding after I edited `config.json` ! Why ?  
@@ -117,7 +122,6 @@ A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I a
 - Testing on other common microcontrollers
 - Analog ?
 
----
 [^1]: I do miss pointers though...
 [^2]: Expect someone to slap it on a ESP32-S3. That someone might be me. *Might*.
 [^3]: It works pretty well on Tekken 8 too !
