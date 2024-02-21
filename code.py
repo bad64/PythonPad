@@ -1,24 +1,32 @@
 print("=== Initializing PythonPad ===")
 
+with open("VERSION") as f:
+    versionString = f.read()
+    print(f"Version {versionString}")
+
 import board
 import digitalio
 import json
 import microcontroller
+import time
 import usb_hid
 
-from GamepadDriver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, DEFAULT
+from GamepadDriver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT
 gp = Gamepad(usb_hid.devices)
 
 # Defining physical states
 HIGH = True
 LOW = False
 
-# Don't go all the way, the Switch doesn't really like that and will wrap around
+# Don't go all the way, the Switch doesn't really like that and will wrap around once in a blue moon
 MIN_TILT = 1
 CENTER = 127
 MAX_TILT = 254
 
 # Defining bitmasks
+## Note: I strongly recommend not touching either of these sections, if you need to change what a given button does, go through config.json instead
+
+## For Smash (or general Switch usage)
 MASK_Y =            0b0000000000000001
 MASK_B =            0b0000000000000010
 MASK_A =            0b0000000000000100
@@ -36,6 +44,7 @@ MASK_CAPTURE =      0b0010000000000000
 MASK_UNUSED1 =      0b0100000000000000
 MASK_UNUSED2 =      0b1000000000000000
 
+## For regular fighting games
 MASK_VS_1P =        MASK_Y
 MASK_VS_2P =        MASK_X
 MASK_VS_3P =        MASK_R
@@ -45,9 +54,10 @@ MASK_VS_2K =        MASK_A
 MASK_VS_3K =        MASK_L
 MASK_VS_4K =        MASK_ZR
 
-# WTAF is a button
+# Ethnological definition of a Button
 class Button:
     def __init__(self, pin, mappedInput):
+        # Declares a Button, with its associated pin and the input it triggers on the host
         self._pins = [ int(pin) ]
         try:
             self._mask = eval("MASK_{}".format(mappedInput))
@@ -57,27 +67,67 @@ class Button:
         self._io[0].switch_to_input()
         self._io[0].pull = digitalio.Pull.UP
     def addPin(self, pin):
+        # Adds a pin to poll for a given input (allows for tying multiple keys to the same function)
         self._pins.append(pin)
         self._io.append(eval("digitalio.DigitalInOut(board.GP{})".format(int(pin))))
         self._io[-1].switch_to_input()
         self._io[-1].pull = digitalio.Pull.UP
     def read(self):
+        # Returns the state of the button
         for io in self._io:
             if io.value == False:
                 return LOW
         return HIGH
     def mask(self):
+        # Returns the bitmask attached to the button (Mostly used for debugging purposes)
         return self._mask
 
 # Parse config from JSON file
 cfg = {}
+debugMode = False
+forceFGC = False
+
+print("Reading config...")
 
 with open("config.json") as f:
     cfg = json.load(f)
 
+try:
+    for k,v in cfg["general"]:
+        if v == "debugMode" and cfg["general"][v] == True:
+            print(f"{GREEN}\t> Debug mode ON{DEFAULT}")
+            debugMode = True
+        elif v == "forceVersusMode" and cfg["general"][v] == True:
+            if debugMode == True:
+                print(f"{GREEN}\t> Force FGC mode ON{DEFAULT}")
+            forceFGC = True
+        elif v == "motd" and cfg["general"][v] == "knock knock":    # :)
+            import random
+            motd = [ "Obtained Narpas' sword",
+                    "Found a X-X!V''Q",
+                    "Look to la luna",
+                    "Hornbuckle who ?",
+                    "This is your reward for actually reading my code :)",
+                    "Wololo !",
+                    "LET'S GO JUSTIN BAILEY !!",
+                    "You must defeat Sheng Long to stand a chance",
+                    "Go to www.thiefwithguns.com",
+                    "Go to www.devilmayquake.com",
+                    "Lamp oil ? Rope ? Bombs ? It's all yours, my friend ! So long as you have enough rubies...",
+                    "Hello, stranger !",
+                    "I Don't Know Frank Amici",
+                    "Did you know: entering up, up, down, down, left, right, left, right, B, A, and start during the boot up sequence does nothing !"
+                    ]
+            r = random.randint(0, len(motd)-1)
+            print(f"{CYAN}\t> {motd[r]}{DEFAULT}")
+            time.sleep(2)
+except KeyError:
+    pass
+
 # Run pre-checks (mode select etc)
 print("Running pre-checks...")
-mode = "smash"
+mode = "smash"      # We default to Smash mode for special mode binds, this makes mode binding uniform
+                    # without requiring an entire separate mode to itself
 for k,v in cfg["modes"].items():
     b = Button(k, None)
     if b.read() == LOW:
@@ -89,19 +139,29 @@ for k,v in cfg["modes"].items():
             mode = v
     b._io[0].deinit()  # Free the io pin for rebinding later
 
+if forceFGC:
+    mode = "versus"
+
 # Bind all inputs
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
 
 print(f"Loading config: \"{mode}\"")
 
-## Save cycles (lmao as if that was needed) by precalculating tilt values
+## Deal with the modifiers first
+### Save cycles by precalculating tilt values
 xAxisModXDelta = CENTER - round(CENTER * (2/3))
 xAxisModYDelta = CENTER - round(CENTER * (1/3))
 yAxisModXDelta = CENTER - round(CENTER * (2/3))
 yAxisModYDelta = CENTER - round(CENTER * (1/3))
+zAxisModXDelta = CENTER - round(CENTER * (1/2))
+zAxisModYDelta = CENTER - round(CENTER * (1/2))
+rzAxisModXDelta = CENTER - round(CENTER * (1/2))
+rzAxisModYDelta = CENTER - round(CENTER * (1/2))
 
 modifiedXAxis = False
 modifiedYAxis = False
+modifiedZAxis = False
+modifiedRZAxis = False
 
 for k,v in cfg[mode].items():
     if k == "X_AXIS_MOD_X_DELTA":
@@ -165,9 +225,11 @@ if modifiedYAxis:
     print(f"    DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
     print(f"    DOWN:           {MAX_TILT}")
 
+## Now the rest of the inputs
 for k,v in cfg[mode].items():
     try:
-        int(k)  # If the key isn't an int it's a modifier value
+        int(k)  # If the key isn't an int, it *has* to be a modifier value;
+                # We have already dealt with those above so we skip
         if v != "None":
             if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
                 try:
@@ -175,23 +237,28 @@ for k,v in cfg[mode].items():
                 except KeyError:
                     AllButtons["leftAnalog"][v] = Button(k, v)
             elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
+                # We don't specifically catch those in versus mode
+                # because we just don't parse for right stick inputs
+                #
+                # Not that it would hurt to do so !
                 try:
                     AllButtons["rightAnalog"][v].addPin(k)
                 except KeyError:
                     AllButtons["rightAnalog"][v] = Button(k, v)
-            elif v in [ "MOD_X", "MOD_Y" ]:
+            elif v in [ "MOD_X", "MOD_Y", "MOD_V", "MOD_W" ]:
                 try:
                     AllButtons["modifiers"][v].addPin(k)
                 except KeyError:
                     AllButtons["modifiers"][v] = Button(k, v) 
             else:
                 AllButtons["buttons"].append(Button(k, v))
-            print(f"Bound key \"{v}\" to input on pin {k}")
+            if debugMode:
+                print(f"Bound key \"{v}\" to input on pin {k}")
     except:
         pass
 
 # We're good to go, enter loop
-print("PythonPad starts !")
+print("=== PythonPad starts ! ===")
 
 while True:
     # Buttons
@@ -286,15 +353,6 @@ while True:
             gp.set_lsy(y)
 
         # Right stick
-        ## X axis
-        if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
-            z = MIN_TILT
-        elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
-            z = CENTER
-        elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
-            z = MAX_TILT
-        else:
-            z = MIN_TILT
         ## Y axis
         if AllButtons["rightAnalog"]["C_UP"].read() == LOW and AllButtons["rightAnalog"]["C_DOWN"].read() == HIGH:
             rz = MIN_TILT
@@ -302,6 +360,25 @@ while True:
             rz = CENTER
         elif AllButtons["rightAnalog"]["C_UP"].read() == HIGH and AllButtons["rightAnalog"]["C_DOWN"].read() == LOW:
             rz = MAX_TILT
+        ## X axis
+        ## Overrides Y axis values through modifiers
+        if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
+            if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
+                rz = MIN_TILT
+            elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                rz = MAX_TILT
+            z = MIN_TILT
+        elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
+            ## Why parse modifiers in that case ?
+            z = CENTER
+        elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
+            if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
+                rz = MIN_TILT
+            elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                rz = MAX_TILT
+            z = MAX_TILT
+        else:
+            z = MIN_TILT
 
         gp.set_rsx(z)
         gp.set_rsy(rz)
@@ -335,4 +412,5 @@ while True:
             elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
                 gp.set_dpad(HAT_DOWN_RIGHT)
 
+    # Finally send the report, yay !
     gp.send()

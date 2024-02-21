@@ -1,0 +1,6 @@
+0.1a:
+- Implemented changelogs (aka this very file)
+- code.py:
+	- Added a bunch of comments to make the code easier to follow along
+	- Added the basis for two extra modifiers for the C-Stick (not implemented properly)
+	- Added toggles for debug mode and forced FGC mode
