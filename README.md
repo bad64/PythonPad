@@ -3,7 +3,7 @@
 # CircuitPython based all buttons all purpose (but mostly Smash) controller firmware
 
 This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) controller !
-
+---
 ## What it do
 
 This is supposed to be the followup to my Pico-SDK based PicoPad. It features:
@@ -75,6 +75,7 @@ Hold the key corresponding to the "A" input while plugging your board. After a f
 > [!NOTE]
 > In short: Edit `config.json` with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
 
+---
 ## Updating the firmware
 
 Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading that file again)
@@ -90,8 +91,9 @@ On paper, this is actually fairly straightforward, until you get to the actual i
 
 The first part is arguably the easiest one: Edit `config.json`; Add a new entry in the `modes` section, using a pin number as key and whatever name you want as a value[^7].Expand the file with a section using the same name as the one you just added. Technically the names do not need to match, but I follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle) and so should you ! Anyway, copy the bindings from another existing section to give yourself a comfortable base to work with.
 
-Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^8]. Add your mode name to the conditional. And this is basically where I can basically no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
+Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^8]. Add your mode name to the conditional. And this is basically where I can no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
 
+---
 ## Troubleshooting/FAQ
 
 Q: My gamepad stopped responding after I edited `config.json` ! Why ?  
@@ -109,6 +111,13 @@ A: No shade thrown to them, it's a really good piece of firmware. *But*: 1) AFAI
 Q: Will you add RGBLEDs/bluetooth/Nunchuk/Ring Fit/etc support ?  
 A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I almost maxed out the I/O on them as it is. Maybe once I start daisy chaining MCUs via the power of I2C. Never say never !
 
+## TODO
+
+- General code cleanup
+- Testing on other common microcontrollers
+- Analog ?
+
+---
 [^1]: I do miss pointers though...
 [^2]: Expect someone to slap it on a ESP32-S3. That someone might be me. *Might*.
 [^3]: It works pretty well on Tekken 8 too !
