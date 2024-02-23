@@ -93,15 +93,17 @@ with open("config.json") as f:
     cfg = json.load(f)
 
 try:
-    for k,v in cfg["general"]:
-        if v == "debugMode" and cfg["general"][v] == True:
+    for item in cfg["general"]:
+        if item == "debug" and cfg["general"][item] == True:
             print(f"{GREEN}\t> Debug mode ON{DEFAULT}")
             debugMode = True
-        elif v == "forceVersusMode" and cfg["general"][v] == True:
+            time.sleep(1)
+        elif item == "forceVersusMode" and cfg["general"][item] == True:
             if debugMode == True:
                 print(f"{GREEN}\t> Force FGC mode ON{DEFAULT}")
+                time.sleep(1)
             forceFGC = True
-        elif v == "motd" and cfg["general"][v] == "knock knock":    # :)
+        elif item == "motd" and cfg["general"][item] == "knock knock":
             import random
             motd = [ "Obtained Narpas' sword",
                     "Found a X-X!V''Q",
@@ -120,7 +122,7 @@ try:
                     ]
             r = random.randint(0, len(motd)-1)
             print(f"{CYAN}\t> {motd[r]}{DEFAULT}")
-            time.sleep(2)
+            time.sleep(1)
 except KeyError:
     pass
 
@@ -378,7 +380,7 @@ while True:
                 rz = MAX_TILT
             z = MAX_TILT
         else:
-            z = MIN_TILT
+            z = CENTER
 
         gp.set_rsx(z)
         gp.set_rsy(rz)
