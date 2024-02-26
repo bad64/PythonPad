@@ -118,7 +118,9 @@ A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I a
 
 ## TODO
 
-- General code cleanup
+- SOCD cleaning types
+- Decoupling input poll routines from the main loop/file
+- Per-board/per-mcu `config.json` ?
 - Testing on other common microcontrollers
 - Analog ?
 

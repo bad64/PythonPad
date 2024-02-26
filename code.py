@@ -54,7 +54,7 @@ MASK_VS_2K =        MASK_A
 MASK_VS_3K =        MASK_L
 MASK_VS_4K =        MASK_ZR
 
-# Ethnological definition of a Button
+# Anthropomorphic definition of a Button
 class Button:
     def __init__(self, pin, mappedInput):
         # Declares a Button, with its associated pin and the input it triggers on the host
@@ -82,6 +82,15 @@ class Button:
         # Returns the bitmask attached to the button (Mostly used for debugging purposes)
         return self._mask
 
+# Utility function to check if a button is defined in the config, then return its value
+def safetest(cfg, btn):
+    for item in cfg:
+        try:
+            return item[btn].read()
+        except:
+            pass
+    return False
+
 # Parse config from JSON file
 cfg = {}
 debugMode = False
@@ -92,6 +101,8 @@ print("Reading config...")
 with open("config.json") as f:
     cfg = json.load(f)
 
+## General config stuff
+## Ideally this is where one would control output verbosity and things like that
 try:
     for item in cfg["general"]:
         if item == "debug" and cfg["general"][item] == True:
@@ -264,7 +275,7 @@ print("=== PythonPad starts ! ===")
 
 while True:
     # Buttons
-    ## This is shared between all modes
+    ## This is shared between all modes, don't touch it
     gp.reset_buttons()
 
     for b in AllButtons["buttons"]:
@@ -355,43 +366,55 @@ while True:
             gp.set_lsy(y)
 
         # Right stick
-        ## Y axis
         if AllButtons["rightAnalog"]["C_UP"].read() == LOW and AllButtons["rightAnalog"]["C_DOWN"].read() == HIGH:
             rz = MIN_TILT
-        elif AllButtons["rightAnalog"]["C_UP"].read() == HIGH and AllButtons["rightAnalog"]["C_DOWN"].read() == HIGH:
-            rz = CENTER
+            if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
+                z = MIN_TILT
+            elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
+                z = MAX_TILT
+            elif (AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH) \
+            or (AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW):
+                z = CENTER
         elif AllButtons["rightAnalog"]["C_UP"].read() == HIGH and AllButtons["rightAnalog"]["C_DOWN"].read() == LOW:
             rz = MAX_TILT
-        ## X axis
-        ## Overrides Y axis values through modifiers
-        if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
-            if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
-                rz = MIN_TILT
-            elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
-                rz = MAX_TILT
-            z = MIN_TILT
-        elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
-            ## Why parse modifiers in that case ?
-            z = CENTER
-        elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
-            if AllButtons["modifiers"]["MOD_X"].read() == LOW and AllButtons["modifiers"]["MOD_Y"].read() == HIGH:
-                rz = MIN_TILT
-            elif AllButtons["modifiers"]["MOD_X"].read() == HIGH and AllButtons["modifiers"]["MOD_Y"].read() == LOW:
-                rz = MAX_TILT
-            z = MAX_TILT
-        else:
-            z = CENTER
+            if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
+                z = MIN_TILT
+            elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
+                z = MAX_TILT
+            elif (AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH) \
+            or (AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW):
+                z = CENTER
+        elif (AllButtons["rightAnalog"]["C_UP"].read() == HIGH and AllButtons["rightAnalog"]["C_DOWN"].read() == HIGH) \
+        or (AllButtons["rightAnalog"]["C_UP"].read() == LOW and AllButtons["rightAnalog"]["C_DOWN"].read() == LOW):
+            rz = CENTER
+            if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
+                z = MIN_TILT
+                if safetest(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
+                    rz = MIN_TILT
+                elif safetest(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                    rz = MAX_TILT
+            elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
+                z = MAX_TILT
+                if safetest(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
+                    rz = MIN_TILT
+                elif safetest(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                    rz = MAX_TILT
+            elif (AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH) \
+            or (AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW):
+                # No need to test for extra modifiers
+                z = CENTER
 
         gp.set_rsx(z)
         gp.set_rsy(rz)
 
     elif mode == "versus":
+        # Set all analogs to center and leave'em here
         gp.set_lsx(x)
         gp.set_lsy(y)
         gp.set_rsx(z)
         gp.set_rsy(rz)
 
-        # Left stick(/Dpad)
+        # Dpad
         if AllButtons["leftAnalog"]["UP"].read() == LOW:
             if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
                 gp.set_dpad(HAT_UP_LEFT)
