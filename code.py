@@ -9,6 +9,7 @@ import digitalio
 import json
 import microcontroller
 import time
+import traceback
 import usb_hid
 
 from GamepadDriver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT
@@ -54,6 +55,12 @@ MASK_VS_2K =        MASK_A
 MASK_VS_3K =        MASK_L
 MASK_VS_4K =        MASK_ZR
 
+# Defining a pin prefix
+## TODO: Add more board defs
+prefix = "GP"
+if "adafruit_feather_esp32s3" in board.board_id:
+    prefix = "D"
+
 # Anthropomorphic definition of a Button
 class Button:
     def __init__(self, pin, mappedInput):
@@ -63,13 +70,13 @@ class Button:
             self._mask = eval("MASK_{}".format(mappedInput))
         except:
             self._mask = None
-        self._io = [ eval("digitalio.DigitalInOut(board.GP{})".format(int(pin))) ]
+        self._io = [ eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(pin))) ]
         self._io[0].switch_to_input()
         self._io[0].pull = digitalio.Pull.UP
     def addPin(self, pin):
         # Adds a pin to poll for a given input (allows for tying multiple keys to the same function)
         self._pins.append(pin)
-        self._io.append(eval("digitalio.DigitalInOut(board.GP{})".format(int(pin))))
+        self._io.append(eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(pin))))
         self._io[-1].switch_to_input()
         self._io[-1].pull = digitalio.Pull.UP
     def read(self):
@@ -83,7 +90,7 @@ class Button:
         return self._mask
 
 # Utility function to check if a button is defined in the config, then return its value
-def safetest(cfg, btn):
+def test(cfg, btn):
     for item in cfg:
         try:
             return item[btn].read()
@@ -106,9 +113,10 @@ with open("config.json") as f:
 try:
     for item in cfg["general"]:
         if item == "debug" and cfg["general"][item] == True:
-            print(f"{GREEN}\t> Debug mode ON{DEFAULT}")
             debugMode = True
-            time.sleep(1)
+            if debugMode == True:
+                print(f"{GREEN}\t> Debug mode ON{DEFAULT}")
+                time.sleep(1)
         elif item == "forceVersusMode" and cfg["general"][item] == True:
             if debugMode == True:
                 print(f"{GREEN}\t> Force FGC mode ON{DEFAULT}")
@@ -141,16 +149,22 @@ except KeyError:
 print("Running pre-checks...")
 mode = "smash"      # We default to Smash mode for special mode binds, this makes mode binding uniform
                     # without requiring an entire separate mode to itself
-for k,v in cfg["modes"].items():
-    b = Button(k, None)
-    if b.read() == LOW:
-        if v == "bootloader":
-            print("We gotta reboot !")
-            microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
-            microcontroller.reset()
-        else:
-            mode = v
-    b._io[0].deinit()  # Free the io pin for rebinding later
+try:
+    for k,v in cfg["modes"].items():
+        b = Button(k, None)
+        if b.read() == LOW:
+            if v == "bootloader":
+                print("We gotta reboot !")
+                microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
+                microcontroller.reset()
+            else:
+                mode = v
+        b._io[0].deinit()  # Free the io pin for rebinding later
+except Exception as e:
+    if "message" in dir(e):
+        print(f"{RED}ERROR: {e.message}{DEFAULT}")
+    else:
+        print(f"{RED}ERROR: {e}{DEFAULT}")
 
 if forceFGC:
     mode = "versus"
@@ -264,11 +278,13 @@ for k,v in cfg[mode].items():
                 except KeyError:
                     AllButtons["modifiers"][v] = Button(k, v) 
             else:
-                AllButtons["buttons"].append(Button(k, v))
-            if debugMode:
+                    AllButtons["buttons"].append(Button(k, v))
+            if debugMode == True:
                 print(f"Bound key \"{v}\" to input on pin {k}")
-    except:
-        pass
+    except Exception as e:
+        if debugMode == True:
+            print(f"{YELLOW}Attempted to bind key \"{v}\" to pin {k} but failed{DEFAULT}")
+            print(f"{YELLOW}{e}{DEFAULT}")
 
 # We're good to go, enter loop
 print("=== PythonPad starts ! ===")
@@ -389,15 +405,15 @@ while True:
             rz = CENTER
             if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
                 z = MIN_TILT
-                if safetest(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
+                if test(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
                     rz = MIN_TILT
-                elif safetest(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                elif test(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
                     rz = MAX_TILT
             elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
                 z = MAX_TILT
-                if safetest(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
+                if test(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
                     rz = MIN_TILT
-                elif safetest(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+                elif test(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
                     rz = MAX_TILT
             elif (AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH) \
             or (AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW):
