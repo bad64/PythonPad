@@ -1,6 +1,7 @@
 110324: (untested)
 - Added ESP32-S3-WROOM-1-N8R2 (henceforth known as "One Board") support
 - Moved the config files to per-mcu subdirectories
+- Rewrote some parts of the README to reflect new and upcoming changes
 
 270224: (tested)
 - Testing on the Adafruit Feather ESP32-S3

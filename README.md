@@ -50,8 +50,8 @@ Once you're all set up, when plugged into a computer, it will show up as both a 
 - `GamepadDriver.py` is, as the name subtly implies, ~~a library to control your fridge via MQTT~~ the driver implementation of the Gamepad class. Again, probably best to not touch it, though it's a lot less sensitive than `boot.py`
 - `code.py` is the main loop. You can screw around with it, it's probably the one that is going to do the least damage to your flash memory, unless you decide to write whole megabytes to it for some reason
 - `VERSION` is mandatory for now but it might not be forever
-- `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board.
-- And finally, one configuration file, in JSON format. See the `config/` subdirectory.
+- `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board anyway
+- And finally, one configuration file, in JSON format. See the `config/` subdirectory and their associated README files
 
 The file consists of pairs of keys and values (as most JSON files tend to be written as, at a surface level anyway). The keys are pin numbers (again, relative to the RP2040 and my own Hydra board; adapt to your own use), and the values correspond to which input is tied to that particular pin. This technically means you can tie an input to more than one pin, but one pin cannot trigger more than one input (nor is that a desirable feature, according to some rulesets. Consult your local TO for advice before use)
 
@@ -73,7 +73,11 @@ If you want to change an input, pick a pin, then assign it one of the Switch Pro
 
 ## Oh yeah there's a traditional versus fighting mode too
 
-Hold the key corresponding to the "A" input while plugging your board. After a few seconds, the firmware will boot into "Versus mode", which is just a mode where inputs are remapped for a better 2D fighting game experience[^3]:
+There are two ways to access Standard Versus mode:  
+- Hold the key associated to the mode as defined in your config file (by default it should be whatever is on pin 11)
+- In the "general" section of said config file, you can add `"forceVersusMode": true` (This one might change) 
+
+After a few seconds, the firmware will boot into "Versus mode", which is simply a mode where inputs are remapped for a better 2D fighting game experience[^3]:
 
 * Action buttons try to emulate the button placements on a traditional box
 * Non-existent keys (typically both modifiers along with C-Down and A) map to the Up directional to approximate placement of said direction on a more well known button layout
@@ -81,12 +85,14 @@ Hold the key corresponding to the "A" input while plugging your board. After a f
 * C-stick gets yoten[^4]
 * SOCD gets resolved to LRN & UDU[^5][^6]
 
+---
 > [!NOTE]
 > In short: Edit `config.json` with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
+---
 
 ## Updating the firmware
 
-Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, `VERSION`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading that file again)
+Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, `VERSION`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading the default version of that file again)
 
 ## Extending the firmware with new modes
 
@@ -116,10 +122,12 @@ Q: Why should I use this instead of [GP2040-CE](https://gp2040-ce.info/) ?
 A: No shade thrown to them, it's a really good piece of firmware. *But*: 1) AFAIK GP2040-CE doesn't necessarily support Smash (which is the main target of PythonPad, and the FGC firmware being an extra, rather than the other way around), and 2) As the name implies, GP2040-CE runs on RP2040-based boards such as the Pico. If you want something else (STM32, ESP32-S3, nRF528xx, whatever it is the Teensy uses, etc), GP2040 won't work without some serious modification. PythonPad **should**.
 
 Q: Will you add RGBLEDs/bluetooth/Nunchuk/Ring Fit/etc support ?  
-A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I almost maxed out the I/O on them as it is. Maybe once I start daisy chaining MCUs via the power of I2C. Never say never !
+A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I almost maxed out the I/O on them as it is. Maybe once I start daisy chaining MCUs via the power of I2C. Never say never !  
+*Update 11/03/2024: RGB strips are supported on the One Board, assigned to IO9 ! No code for it yet though, but at least the hardware is here*
 
 ## TODO
 
+- Config editing guide (IMPORTANT)
 - SOCD cleaning types
 - Decoupling input poll routines from the main loop/file
 - Safe testing for every input
