@@ -12,7 +12,7 @@ If you have a serial monitor, you can add `"debug": true` to the `"general"` sec
 
 ## Valid inputs
 
-| | | |
+| Inputs | Inputs | Inputs | Inputs |
 | --- | --- | --- | --- |
 | UP | DOWN | LEFT | RIGHT |
 | A | B | X | Y |
