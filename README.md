@@ -49,7 +49,9 @@ Once you're all set up, when plugged into a computer, it will show up as both a 
 - `boot.py` contains the HID report descriptor and the HID init code. It's probably a good idea to leave it alone. **You can softlock yourself out of that drive if you freestyle too much.** (It's fixable by forcing your device into bootloader mode and reflashing CircuitPython though, but you still should be appropriately scared when doing things to this file)
 - `GamepadDriver.py` is, as the name subtly implies, ~~a library to control your fridge via MQTT~~ the driver implementation of the Gamepad class. Again, probably best to not touch it, though it's a lot less sensitive than `boot.py`
 - `code.py` is the main loop. You can screw around with it, it's probably the one that is going to do the least damage to your flash memory, unless you decide to write whole megabytes to it for some reason
-- And finally, `config.json`, used for binding keys to individual buttons in the report (Translation: *file makes board go brrt when press button*)
+- `VERSION` is mandatory for now but it might not be forever
+- `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board.
+- And finally, one configuration file, in JSON format. See the `config/` subdirectory.
 
 The file consists of pairs of keys and values (as most JSON files tend to be written as, at a surface level anyway). The keys are pin numbers (again, relative to the RP2040 and my own Hydra board; adapt to your own use), and the values correspond to which input is tied to that particular pin. This technically means you can tie an input to more than one pin, but one pin cannot trigger more than one input (nor is that a desirable feature, according to some rulesets. Consult your local TO for advice before use)
 
@@ -84,7 +86,7 @@ Hold the key corresponding to the "A" input while plugging your board. After a f
 
 ## Updating the firmware
 
-Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading that file again)
+Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, `VERSION`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading that file again)
 
 ## Extending the firmware with new modes
 
@@ -120,7 +122,6 @@ A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I a
 
 - SOCD cleaning types
 - Decoupling input poll routines from the main loop/file
-- Per-board defines in `code.py`
 - Safe testing for every input
 - Testing on other common microcontrollers
 - Analog ?

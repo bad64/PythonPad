@@ -1,4 +1,6 @@
 {
+	"general": {
+	},
 	"modes" : {
 		"07": "bootloader",
 		"17": "versus"

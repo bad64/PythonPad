@@ -60,6 +60,8 @@ MASK_VS_4K =        MASK_ZR
 prefix = "GP"
 if "adafruit_feather_esp32s3" in board.board_id:
     prefix = "D"
+elif "espressif_esp32s3" in board.board_id:
+    prefix = "IO"
 
 # Anthropomorphic definition of a Button
 class Button:
