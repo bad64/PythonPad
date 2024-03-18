@@ -1,5 +1,6 @@
 {
 	"general": {
+		"defaultMode": "smash"
 	},
 	"modes" : {
 		"07": "bootloader",

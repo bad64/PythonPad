@@ -1,10 +1,11 @@
 {
 	"general": {
-		"forceVersus":
+		"defaultMode": "versus"
 	},
 	"modes" : {
 		"07": "bootloader",
-		"11": "versus"
+		"10": "versus",
+		"11": "smash"
 	},
 	"smash": {
 		"00": "None",

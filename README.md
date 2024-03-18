@@ -8,8 +8,8 @@ Here's what has been tested so far:
 | Board | MCU | Works ? | Comments
 | --- | --- | --- | --- | 
 | Raspberry Pi Pico | RP2040 | &#9989; | Literally made for it |
-| ESP32-S3-DevKitC-1-N8R2 | ESP32-S3 | &#9989; | |
 | Adafruit Feather ESP32-S3 | ESP32-S3 | &#9989; | Tested on the 4MB Flash model|
+| ESP32-S3-DevKitC-1-N8R2 | ESP32-S3 | &#9989; | Powers the One Board |
 
 ## What it do
 
@@ -18,7 +18,7 @@ This is supposed to be the followup to my Pico-SDK based PicoPad. It features:
 - Human-readable and customizable keybindings, without needing to recompile or go through a web-based UI
 - Code that is <sup>(allegedly[^1])</sup> easier to maintain and extend
 - Far more verbose error reporting
-- Portability to any device that supports CircuitPython[^2]
+- Portability to any device that supports CircuitPython
 
 Surely there must be some huge tradeoffs compared to C, right ?
 
@@ -75,15 +75,15 @@ If you want to change an input, pick a pin, then assign it one of the Switch Pro
 
 There are two ways to access Standard Versus mode:  
 - Hold the key associated to the mode as defined in your config file (by default it should be whatever is on pin 11)
-- In the "general" section of said config file, you can add `"forceVersusMode": true` (This one might change) 
+- In the "general" section of said config file, you can set `"defaultMode"` to `versus` 
 
-After a few seconds, the firmware will boot into "Versus mode", which is simply a mode where inputs are remapped for a better 2D fighting game experience[^3]:
+After a few seconds, the firmware will boot into "Versus mode", which is simply a mode where inputs are remapped for a better 2D fighting game experience[^2]:
 
 * Action buttons try to emulate the button placements on a traditional box
 * Non-existent keys (typically both modifiers along with C-Down and A) map to the Up directional to approximate placement of said direction on a more well known button layout
 * All directional inputs are considered d-pad inputs instead of analog
-* C-stick gets yoten[^4]
-* SOCD gets resolved to LRN & UDU[^5][^6]
+* C-stick gets yoten[^3]
+* SOCD gets resolved to LRN & UDU[^4][^5]
 
 ---
 > [!NOTE]
@@ -103,9 +103,9 @@ Updating is pretty easy: Connect your controller to a computer, and copy over th
 
 On paper, this is actually fairly straightforward, until you get to the actual implementation. (This happens to describe the field of programming as a whole, incidentally)
 
-The first part is arguably the easiest one: Edit `config.json`; Add a new entry in the `modes` section, using a pin number as key and whatever name you want as a value[^7].Expand the file with a section using the same name as the one you just added. Technically the names do not need to match, but I follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle) and so should you ! Anyway, copy the bindings from another existing section to give yourself a comfortable base to work with.
+The first part is arguably the easiest one: Edit `config.json`; Add a new entry in the `modes` section, using a pin number as key and whatever name you want as a value[^6].Expand the file with a section using the same name as the one you just added. Technically the names do not need to match, but I follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle) and so should you ! Anyway, copy the bindings from another existing section to give yourself a comfortable base to work with.
 
-Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^8]. Add your mode name to the conditional. And this is basically where I can no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
+Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^7]. Add your mode name to the conditional. And this is basically where I can no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
 
 ## Troubleshooting/FAQ
 
@@ -119,10 +119,10 @@ Q: Will this firmware work on board/MCU XYZ ?
 A: I dunno. I can't test every micro out there (even if I set up a Patreon to cover the costs, I just don't have the time). The nature of (Circuit)Python means that if the board can run the interpreter at all (and has physical USB peripheral pins), there's a fairly high chance PythonPad will work on it. With the caveat that you will then want to adapt the pinout by hand.
 
 Q: Why should I use this instead of [GP2040-CE](https://gp2040-ce.info/) ?  
-A: No shade thrown to them, it's a really good piece of firmware. *But*: 1) AFAIK GP2040-CE doesn't necessarily support Smash (which is the main target of PythonPad, and the FGC firmware being an extra, rather than the other way around), and 2) As the name implies, GP2040-CE runs on RP2040-based boards such as the Pico. If you want something else (STM32, ESP32-S3, nRF528xx, whatever it is the Teensy uses, etc), GP2040 won't work without some serious modification. PythonPad **should**.
+A: No shade thrown to them, it's a really good piece of firmware. *But*: 1) AFAIK GP2040-CE doesn't necessarily support Smash (which is the main target of PythonPad, and the FGC firmware being an extra, rather than the other way around), and 2) As the name implies, GP2040-CE runs on RP2040-based boards such as the Pico. If you want something else (STM32, nRF528xx, whatever it is the Teensy uses, etc), GP2040 won't work without some serious modification. PythonPad **should**.
 
 Q: Will you add RGBLEDs/bluetooth/Nunchuk/Ring Fit/etc support ?  
-A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I almost maxed out the I/O on them as it is. Maybe once I start daisy chaining MCUs via the power of I2C. Never say never !  
+A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I almost maxed out the I/O on it as it is. Maybe once I start daisy chaining MCUs via the power of I2C. Never say never !  
 *Update 11/03/2024: RGB strips are supported on the One Board, assigned to IO9 ! No code for it yet though, but at least the hardware is here*
 
 ## TODO
@@ -135,10 +135,9 @@ A: I *might*. Currently I'm developing this for Raspberry Pi Pico boards and I a
 - Analog ?
 
 [^1]: I do miss pointers though...
-[^2]: Expect someone to slap it on a ESP32-S3. That someone might be me. *Might*.
-[^3]: It works pretty well on Tekken 8 too !
-[^4]: Past participle of "to yeet"
-[^5]: **L**eft + **R**ight = **N**eutral, **U**p + **D**own = **U**p
-[^6]: Again depending on the game you play, tournament organizer, frequency of whalesong, and so on, this might not be a legal config. Always consult your local TO for advice !
-[^7]: Murphy's law says someone will eventually try to name one with emojis or non-printable characters, so consider this footnote as a proverbial and quasi literal asterisk
-[^8]: Not hyperbole, this is the string you want to search for in your editor
+[^2]: It works pretty well on Tekken 8 too !
+[^3]: Past participle of "to yeet"
+[^4]: **L**eft + **R**ight = **N**eutral, **U**p + **D**own = **U**p
+[^5]: Again depending on the game you play, tournament organizer, frequency of whalesong, and so on, this might not be a legal config. Always consult your local TO for advice !
+[^6]: Murphy's law says someone will eventually try to name one with emojis or non-printable characters, so consider this footnote as a proverbial and quasi literal asterisk
+[^7]: Not hyperbole, this is the string you want to search for in your editor

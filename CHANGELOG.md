@@ -1,3 +1,8 @@
+180324: (tested)
+- VERSION file is no longer required (the firmware will skip it if not found/corrupted/etc)
+- Default boot mode can now be specified under the "general" section as `defaultMode`
+- Silenced debug-only errors when attempting to assign a modifier value to a Button as an input (it's expected behaviour)
+
 110324: (untested)
 - Added ESP32-S3-WROOM-1-N8R2 (henceforth known as "One Board") support
 - Moved the config files to per-mcu subdirectories

@@ -1,8 +1,11 @@
 print("=== Initializing PythonPad ===")
 
-with open("VERSION") as f:
-    versionString = f.read()
-    print(f"Version {versionString}")
+try:
+    with open("VERSION") as f:
+        versionString = f.read()
+        print(f"Version {versionString}")
+except:
+    print("VERSION file not found")
 
 import board
 import digitalio
@@ -103,15 +106,14 @@ def test(cfg, btn):
 # Parse config from JSON file
 cfg = {}
 debugMode = False
-forceFGC = False
 
 print("Reading config...")
-
 with open("config.json") as f:
     cfg = json.load(f)
 
 ## General config stuff
 ## Ideally this is where one would control output verbosity and things like that
+## TODO: Find "things like that"
 try:
     for item in cfg["general"]:
         if item == "debug" and cfg["general"][item] == True:
@@ -119,27 +121,22 @@ try:
             if debugMode == True:
                 print(f"{GREEN}\t> Debug mode ON{DEFAULT}")
                 time.sleep(1)
-        elif item == "forceVersusMode" and cfg["general"][item] == True:
-            if debugMode == True:
-                print(f"{GREEN}\t> Force FGC mode ON{DEFAULT}")
-                time.sleep(1)
-            forceFGC = True
         elif item == "motd" and cfg["general"][item] == "knock knock":
             import random
             motd = [ "Obtained Narpas' sword",
                     "Found a X-X!V''Q",
                     "Look to la luna",
                     "Hornbuckle who ?",
-                    "This is your reward for actually reading my code :)",
                     "Wololo !",
                     "LET'S GO JUSTIN BAILEY !!",
                     "You must defeat Sheng Long to stand a chance",
+                    "Go home and be a family man !",
                     "Go to www.thiefwithguns.com",
                     "Go to www.devilmayquake.com",
                     "Lamp oil ? Rope ? Bombs ? It's all yours, my friend ! So long as you have enough rubies...",
                     "Hello, stranger !",
-                    "I Don't Know Frank Amici",
-                    "Did you know: entering up, up, down, down, left, right, left, right, B, A, and start during the boot up sequence does nothing !"
+                    "Smashing Pumpkins Into Some Pile Of Putrid Debris !",
+                    "Did you know: entering Up, Up, Down, Down, Left, Right, Left, Right, B, A, and Start during the boot up sequence does nothing !"
                     ]
             r = random.randint(0, len(motd)-1)
             print(f"{CYAN}\t> {motd[r]}{DEFAULT}")
@@ -147,10 +144,15 @@ try:
 except KeyError:
     pass
 
-# Run pre-checks (mode select etc)
+# Mode selection
 print("Running pre-checks...")
-mode = "smash"      # We default to Smash mode for special mode binds, this makes mode binding uniform
-                    # without requiring an entire separate mode to itself
+mode = "smash"      ## We default to Smash mode in case of invalid or missing option
+try:
+    mode = cfg["general"]["defaultMode"]
+except:
+    pass
+
+## Iterate over keys defined in the "modes" section
 try:
     for k,v in cfg["modes"].items():
         b = Button(k, None)
@@ -168,10 +170,7 @@ except Exception as e:
     else:
         print(f"{RED}ERROR: {e}{DEFAULT}")
 
-if forceFGC:
-    mode = "versus"
-
-# Bind all inputs
+# Input binding
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
 
 print(f"Loading config: \"{mode}\"")
@@ -234,6 +233,7 @@ for k,v in cfg[mode].items():
             else:
                 print(f"{RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
 
+## Printing axis values over UART just to be sure nothing is on fire
 if modifiedXAxis:
     print("New X axis values:")
     print(f"    LEFT:           {MIN_TILT}")
@@ -258,7 +258,8 @@ if modifiedYAxis:
 for k,v in cfg[mode].items():
     try:
         int(k)  # If the key isn't an int, it *has* to be a modifier value;
-                # We have already dealt with those above so we skip
+                # We have already dealt with those above so we catch the exception
+                # and skip over to the next item in line
         if v != "None":
             if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
                 try:
@@ -268,7 +269,7 @@ for k,v in cfg[mode].items():
             elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
                 # We don't specifically catch those in versus mode
                 # because we just don't parse for right stick inputs
-                #
+                # ...
                 # Not that it would hurt to do so !
                 try:
                     AllButtons["rightAnalog"][v].addPin(k)
@@ -283,10 +284,16 @@ for k,v in cfg[mode].items():
                     AllButtons["buttons"].append(Button(k, v))
             if debugMode == True:
                 print(f"Bound key \"{v}\" to input on pin {k}")
+    except ValueError as e:
+        # This is expected behaviour; we merely hide it to the UART interface
+        # See beginning of the try/except block
+        pass
     except Exception as e:
+        # Another exception has occured; we catch that and show
+        # TODO: Maybe determine if the exception is recoverable ?
         if debugMode == True:
             print(f"{YELLOW}Attempted to bind key \"{v}\" to pin {k} but failed{DEFAULT}")
-            print(f"{YELLOW}{e}{DEFAULT}")
+            print(f"{YELLOW}[{type(e)}]: {e}{DEFAULT}")
 
 # We're good to go, enter loop
 print("=== PythonPad starts ! ===")

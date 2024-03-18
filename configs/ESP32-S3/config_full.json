@@ -1,9 +1,11 @@
 {
 	"general": {
+		"defaultMode": "smash"
 	},
 	"modes" : {
 		"07": "bootloader",
-		"17": "versus"
+		"10": "smash",
+		"11": "versus"
 	},
 	"smash": {
 		"00": "None",
