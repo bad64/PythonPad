@@ -2,7 +2,7 @@
 
 # CircuitPython based all buttons all purpose (but mostly Smash) controller firmware
 
-This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) controller !  
+This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) and [Gnome](https://github.com/bad64/OpenFightStick/tree/main/Gnome) controllers !  
 Here's what has been tested so far:
 
 | Board | MCU | Works ? | Comments
@@ -49,35 +49,19 @@ Once you're all set up, when plugged into a computer, it will show up as both a 
 - `boot.py` contains the HID report descriptor and the HID init code. It's probably a good idea to leave it alone. **You can softlock yourself out of that drive if you freestyle too much.** (It's fixable by forcing your device into bootloader mode and reflashing CircuitPython though, but you still should be appropriately scared when doing things to this file)
 - `GamepadDriver.py` is, as the name subtly implies, ~~a library to control your fridge via MQTT~~ the driver implementation of the Gamepad class. Again, probably best to not touch it, though it's a lot less sensitive than `boot.py`
 - `code.py` is the main loop. You can screw around with it, it's probably the one that is going to do the least damage to your flash memory, unless you decide to write whole megabytes to it for some reason
-- `VERSION` is mandatory for now but it might not be forever
+- `VERSION` is an optional file telling the firmware to output its version number. Only really useful for debugging
 - `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board anyway
 - And finally, one configuration file, in JSON format. See the `config/` subdirectory and their associated README files
 
 The file consists of pairs of keys and values (as most JSON files tend to be written as, at a surface level anyway). The keys are pin numbers (again, relative to the RP2040 and my own Hydra board; adapt to your own use), and the values correspond to which input is tied to that particular pin. This technically means you can tie an input to more than one pin, but one pin cannot trigger more than one input (nor is that a desirable feature, according to some rulesets. Consult your local TO for advice before use)
 
-> [!IMPORTANT]
-> Said inputs follow the mapping of the Switch Pro Controller. Please be careful if you're more used to the Xbox mapping:
->
-> (From Switch Pro Controller to Xbox mappings)
-> * Y <-> X
-> * B <-> A
-> * R -> RB
-> * ZR -> RT
-> * L -> LB
-> * ZL -> LT
-> * \+ (aka START in the config file) -> Share
-> * \- (aka SELECT in the config file) -> View
-> * HOME -> giant Xbox button type thing 
-
-If you want to change an input, pick a pin, then assign it one of the Switch Pro Controller inputs as outlined above. Save the file; CircuitPython should automatically reload everything and you're good to go. For the Versus mode, you can use dedicated macros that correspond to a traditional arcade controller input scheme using the prefix "VS\_" (i.e.: VS\_1P, VS\_2K and so forth)
-
 ## Oh yeah there's a traditional versus fighting mode too
 
-There are two ways to access Standard Versus mode:  
-- Hold the key associated to the mode as defined in your config file (by default it should be whatever is on pin 11)
+There are two ways to access Versus mode:  
+- Hold the key associated to the mode as defined in your config file while plugging your controller
 - In the "general" section of said config file, you can set `"defaultMode"` to `versus` 
 
-After a few seconds, the firmware will boot into "Versus mode", which is simply a mode where inputs are remapped for a better 2D fighting game experience[^2]:
+The firmware will then boot into "Versus mode", which is simply a mode where inputs are remapped for a better 2D fighting game experience[^2]:
 
 * Action buttons try to emulate the button placements on a traditional box
 * Non-existent keys (typically both modifiers along with C-Down and A) map to the Up directional to approximate placement of said direction on a more well known button layout
@@ -85,14 +69,9 @@ After a few seconds, the firmware will boot into "Versus mode", which is simply 
 * C-stick gets yoten[^3]
 * SOCD gets resolved to LRN & UDU[^4][^5]
 
----
-> [!NOTE]
-> In short: Edit `config.json` with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
----
-
 ## Updating the firmware
 
-Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, `VERSION`, and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading the default version of that file again)
+Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, `VERSION` (optional), and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading the default version of that file again)
 
 ## Extending the firmware with new modes
 
@@ -110,10 +89,10 @@ Now, into the dragon's den: `code.py`. Locate the section that goes "This is whe
 ## Troubleshooting/FAQ
 
 Q: My gamepad stopped responding after I edited `config.json` ! Why ?  
-A: You probably gave it either a bogus value (like a W button, which only exists on keyboards), or a pin number that isn't made up of two digits (i.e. pin 7 instead of 07). Double check what you typed !
+A: You probably gave it either a bogus value (like a W button, which only exists on keyboards), or a pin number that isn't made up of two digits (i.e. pin *7* instead of *07*). Double check what you typed !
 
 Q: Same question but for `code.py`  
-A: This is harder to diagnose properly through a non-interactive GitHub page. The short answer is that you're probably triggering an exception since, for diagnosis purposes, the main loop isn't encased in a `try ... except` block (I honestly don't know if I *should* do that tbh). In more concise terms: "Code bad". What you can do is use a serial monitor (such as TeraTerm on Windows or Minicom on anything \*NIX based... or, hell, the one bundled in the Arduino IDE if you have to; it just won't interpret VT100 escape sequences/color codes) and repeat whatever it is you did; the exception should show up on your serial monitor, and hopefully help you fix whatever causes it.
+A: This one is harder to diagnose properly through a non-interactive GitHub page. The short answer is that you're probably triggering an exception since, for diagnosis purposes, the main loop isn't encased in a `try ... except` block (I honestly don't know if I *should* do that tbh). In more concise terms: "Code bad". What you can do is use a serial monitor (such as TeraTerm on Windows or Minicom on anything \*NIX based... or, hell, the one bundled in the Arduino IDE if you have to; it just won't interpret VT100 escape sequences/color codes) and repeat whatever it is you did; the exception should show up on your serial monitor, and hopefully help you fix whatever causes it.
 
 Q: Will this firmware work on board/MCU XYZ ?  
 A: I dunno. I can't test every micro out there (even if I set up a Patreon to cover the costs, I just don't have the time). The nature of (Circuit)Python means that if the board can run the interpreter at all (and has physical USB peripheral pins), there's a fairly high chance PythonPad will work on it. With the caveat that you will then want to adapt the pinout by hand.
@@ -127,7 +106,6 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 
 ## TODO
 
-- Config editing guide (IMPORTANT)
 - SOCD cleaning types
 - Decoupling input poll routines from the main loop/file
 - Safe testing for every input

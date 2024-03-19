@@ -1,3 +1,12 @@
+190324: (no testing needed)  
+Only documentative changes  
+- VERSION bumped to 0.2 as I'm feeling close(r) to an RC
+- README changes
+	- Relocated some sections of the main README over to the one in the `config` folder
+	- Updated contents in general to reflect changes I missed in the previous update
+- Structure changes
+	- `config` subfolders now use their board names for extra clarity
+
 180324: (tested)
 - VERSION file is no longer required (the firmware will skip it if not found/corrupted/etc)
 - Default boot mode can now be specified under the "general" section as `defaultMode`
