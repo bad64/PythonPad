@@ -197,17 +197,32 @@ class Gamepad:
     def set_dpad(self, value):
         self._hat = value
 
+    def get_dpad(self):
+        return self._hat
+
     def set_lsx(self, value):
         self._joy_x = value
+
+    def get_lsx(self):
+        return self._joy_x
 
     def set_lsy(self, value):
         self._joy_y = value
 
+    def get_lsy(self):
+        return self._joy_y
+
     def set_rsx(self, value):
         self._joy_z = value
 
+    def get_rsx(self):
+        return self._joy_z
+
     def set_rsy(self, value):
         self._joy_rz = value
+
+    def get_rsy(self):
+        return self._joy_rz
 
     def reset_all(self):
         self._buttons_state = 0

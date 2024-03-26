@@ -1,3 +1,11 @@
+260324: (tested)
+- Separated the directional input routines in their own files for readability's sake
+- config:
+	- New property: `socdType` (accepts "LRN" or "last")
+	- Config files are currently **NOT** up to date
+- GamepadDriver:
+	- Added getters for the current controller state
+
 190324: (no testing needed)  
 Only documentative changes  
 - VERSION bumped to 0.2 as I'm feeling close(r) to an RC
