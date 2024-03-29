@@ -8,6 +8,11 @@
 - versus.py:
 	- Last Input Wins SOCD cleaning now works
 	- Incidentally this means Versus Mode is now feature complete !
+- smash.py:
+	- Last Input Wins SOCD cleaning now works
+	- Smash Mode is now feature complete as well !
+- VERSION:
+	- Bumped up to 0.9 RC, want to test further and iron out some kinks before 1.0
 
 260324: (tested)
 - Separated the directional input routines in their own files for readability's sake

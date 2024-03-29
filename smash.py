@@ -8,10 +8,40 @@ def directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
     ## X axis
     if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
         x = MIN_TILT
+        if gp.get_socd_lock() == True:
+            gp.unlock_socd()
     elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
         x = CENTER
+        if gp.get_socd_lock() == True:
+            gp.unlock_socd()
     elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
         x = MAX_TILT
+        if gp.get_socd_lock() == True:
+            gp.unlock_socd()
+    elif AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
+        if gp.get_socd_type() == "LRN":
+            x = CENTER
+        elif gp.get_socd_type() in [ "LIW", "last", "lastInputWins" ]:
+            # Reference current state of directions
+            lsx_last = gp.get_lsx()
+
+            # Are we locked ?
+            if gp.get_socd_lock() == True:
+                # Do nuthin'
+                x = lsx_last
+            elif gp.get_socd_lock() == False:
+                # Who's on first ?
+                if lsx_last < 127:      # We should be somewhere on the left
+                    x = MAX_TILT        # So we set the virtual stick to the right
+                #elif lsx_last == 127:   # Should not be possible; do something about it
+                #    pass
+                elif lsx_last > 127:    # Yadda yadda right yadda stick to left
+                    x = MIN_TILT
+
+                # Aaaand we lock
+                if gp.get_socd_lock() == False:
+                    gp.lock_socd()
+
     ## Y axis
     if AllButtons["leftAnalog"]["UP"].read() == LOW and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
         y = MIN_TILT

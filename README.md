@@ -69,7 +69,7 @@ The firmware will then boot into "Versus mode", which is simply a mode where inp
 * C-stick gets yoten[^3]
 
 Through your config file, you can choose a SOCD cleaning method by assigning a value to the `socdType` property under the "general" section:
-- `"LRN"` (all caps) for **L**eft + **R**ight = **Neutral**
+- `"LRN"` (all caps) for **L**eft + **R**ight = **N**eutral
 - `LIW`, `last` or `lastInputWins` for... last input wins
 
 > [!NOTE]
