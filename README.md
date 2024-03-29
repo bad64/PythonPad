@@ -47,7 +47,7 @@ Flash the CircuitPython UF2 file to your microcontroller, then extract the libs 
 Once you're all set up, when plugged into a computer, it will show up as both a HID device and a storage device because of CircuitPython [deep magic](http://www.catb.org/jargon/html/D/deep-magic.html). This drive should be invisible to consoles (maybe ? The Switch doesn't care about it at least) and hosts a variety of files. We will focus on four:
 
 - `boot.py` contains the HID report descriptor and the HID init code. It's probably a good idea to leave it alone. **You can softlock yourself out of that drive if you freestyle too much.** (It's fixable by forcing your device into bootloader mode and reflashing CircuitPython though, but you still should be appropriately scared when doing things to this file)
-- `GamepadDriver.py` is, as the name subtly implies, ~~a library to control your fridge via MQTT~~ the driver implementation of the Gamepad class. Again, probably best to not touch it, though it's a lot less sensitive than `boot.py`
+- `gamepad_driver.py` is, as the name subtly implies, ~~a library to control your fridge via MQTT~~ the driver implementation of the Gamepad class. Again, probably best to not touch it, though it's a lot less sensitive than `boot.py`
 - `code.py` is the main loop. You can screw around with it, it's probably the one that is going to do the least damage to your flash memory, unless you decide to write whole megabytes to it for some reason
 - `VERSION` is an optional file telling the firmware to output its version number. Only really useful for debugging
 - `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board anyway
@@ -67,11 +67,17 @@ The firmware will then boot into "Versus mode", which is simply a mode where inp
 * Non-existent keys (typically both modifiers along with C-Down and A) map to the Up directional to approximate placement of said direction on a more well known button layout
 * All directional inputs are considered d-pad inputs instead of analog
 * C-stick gets yoten[^3]
-* SOCD gets resolved to LRN & UDU[^4][^5]
+
+Through your config file, you can choose a SOCD cleaning method by assigning a value to the `socdType` property under the "general" section:
+- `"LRN"` (all caps) for **L**eft + **R**ight = **Neutral**
+- `LIW`, `last` or `lastInputWins` for... last input wins
+
+> [!NOTE]
+> In both cases, Up + Down will **always** resolve to Up !
 
 ## Updating the firmware
 
-Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `GamepadDriver.py`, `VERSION` (optional), and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading the default version of that file again)
+Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `gamepad_driver.py`, `VERSION` (optional), and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading the default version of that file again)
 
 ## Extending the firmware with new modes
 
@@ -82,9 +88,9 @@ Updating is pretty easy: Connect your controller to a computer, and copy over th
 
 On paper, this is actually fairly straightforward, until you get to the actual implementation. (This happens to describe the field of programming as a whole, incidentally)
 
-The first part is arguably the easiest one: Edit `config.json`; Add a new entry in the `modes` section, using a pin number as key and whatever name you want as a value[^6].Expand the file with a section using the same name as the one you just added. Technically the names do not need to match, but I follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle) and so should you ! Anyway, copy the bindings from another existing section to give yourself a comfortable base to work with.
+The first part is arguably the easiest one: Edit `config.json`; Add a new entry in the `modes` section, using a pin number as key and whatever name you want as a value[^4].Expand the file with a section using the same name as the one you just added. Technically the names do not need to match, but I follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle) and so should you ! Anyway, copy the bindings from another existing section to give yourself a comfortable base to work with.
 
-Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^7]. Add your mode name to the conditional. And this is basically where I can no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
+Now, into the dragon's den: `code.py`. Locate the section that goes "This is where you should add alternate modes"[^5]. Add your mode name to the conditional. And this is basically where I can no longer assist you: The world is your oyster, and if you know some basic Python (and can decipher the already present code), the biggest hurdle you will face will be directionals since all other inputs are handled about the same. Should you want to handle one differently for whatever reason, please do so within the relevant conditional instead of modifying the button reading loop directly.
 
 ## Troubleshooting/FAQ
 
@@ -106,16 +112,12 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 
 ## TODO
 
-- SOCD cleaning types
-- Decoupling input poll routines from the main loop/file
+- SOCD cleaning types *(Working on it)*
 - Safe testing for every input
-- Testing on other common microcontrollers
-- Analog ?
+- Clean up the code and make it more Pythonic
 
 [^1]: I do miss pointers though...
 [^2]: It works pretty well on Tekken 8 too !
 [^3]: Past participle of "to yeet"
-[^4]: **L**eft + **R**ight = **N**eutral, **U**p + **D**own = **U**p
-[^5]: Again depending on the game you play, tournament organizer, frequency of whalesong, and so on, this might not be a legal config. Always consult your local TO for advice !
-[^6]: Murphy's law says someone will eventually try to name one with emojis or non-printable characters, so consider this footnote as a proverbial and quasi literal asterisk
-[^7]: Not hyperbole, this is the string you want to search for in your editor
+[^4]: Murphy's law says someone will eventually try to name one with emojis or non-printable characters, so consider this footnote as a proverbial and quasi literal asterisk
+[^5]: Not hyperbole, this is the string you want to search for in your editor

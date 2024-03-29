@@ -76,6 +76,10 @@ class Gamepad:
         # duplicate reports.
         self._last_report = bytearray(8)
 
+        # Set SOCD info
+        self._socd = "LRN"
+        self._socd_lock = False
+
         # Store settings separately before putting into report. Saves code
         # especially for buttons.
         self._buttons_state = 0
@@ -193,6 +197,21 @@ class Gamepad:
 
     def release_button(self, bitmask):
         self._buttons_state &= ~bitmask
+
+    def set_socd_type(self, value):
+        self._socd = value
+
+    def get_socd_type(self):
+        return self._socd
+
+    def get_socd_lock(self):
+        return self._socd_lock
+
+    def lock_socd(self):
+        self._socd_lock = True
+
+    def unlock_socd(self):
+        self._socd_lock = False
 
     def set_dpad(self, value):
         self._hat = value

@@ -1,3 +1,14 @@
+290324: (tested)
+- GamepadDriver.py:
+	- Renamed to gamepad\_driver.py for Pythonic complicance
+	- Added new class methods: `set_socd_type()`, `get_socd_type()`, `lock_socd()`, `unlock_socd()`
+	- Added SOCD parameters to the class (see above)
+- config.json:
+	- No actual changes, but `code.py` now checks for valid inputs for the `defaultMode` and `socdType` properties
+- versus.py:
+	- Last Input Wins SOCD cleaning now works
+	- Incidentally this means Versus Mode is now feature complete !
+
 260324: (tested)
 - Separated the directional input routines in their own files for readability's sake
 - config:

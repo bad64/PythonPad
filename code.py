@@ -5,7 +5,7 @@ try:
         versionString = f.read()
         print(f"Version {versionString}")
 except:
-    print("VERSION file not found")
+    print("VERSION file not found; skipping check")
 
 import board
 import digitalio
@@ -15,7 +15,7 @@ import time
 import traceback
 import usb_hid
 
-from GamepadDriver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT
+from gamepad_driver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT
 gp = Gamepad(usb_hid.devices)
 
 # Defining physical states
@@ -146,20 +146,31 @@ except KeyError:
 
 # Mode selection
 print("Running pre-checks...")
-mode = "smash"      ## We default to Smash mode in case of invalid or missing option
+mode = "smash"              ## We default to Smash mode in case of invalid or missing option
 try:
+    ## Attempt to read the default mode from config
     mode = cfg["general"]["defaultMode"]
+    if mode in cfg["modes"].values() and mode != "bootloader":
+        pass    ## No need to print, this is fine to silence since we print the boot
+                ## mode further down the line
+    else:
+        print(f"{RED}Invalid mode: {mode}; defaulting to \"smash\"{DEFAULT}")
+        mode = "smash"
 except:
     pass
 
-socdType = "LRN"
-socdLastX = None
-socdLastY = None
+gp.set_socd_type("LRN")     ## Again, default value for safety
 try:
-    socdType = cfg["general"]["socdType"]
+    gp.set_socd_type(cfg["general"]["socdType"])
+
+    if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
+        print(f"Set SOCD cleaner to {GREEN}{gp.get_socd_type()}{DEFAULT}")
+    else:
+        print(f"{RED}Invalid SOCD cleaner setting \"{gp.get_socd_type()}\"; defaulting to \"LRN\"{DEFAULT}")
+        gp.set_socd_type("LRN")
 except:
-    pass
-print(f"Set SOCD cleaning to {GREEN}{socdType}{DEFAULT}")
+    print(f"{YELLOW}SOCD cleaner type absent; defaulting to \"LRN\"{DEFAULT}")
+    gp.det_socd_type("LRN")
 
 ## Iterate over keys defined in the "modes" section
 try:
@@ -337,8 +348,7 @@ while True:
     ## TODO: de-fuglify this call smh
     directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
             HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
-            CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta, \
-            socdType, socdLastX, socdLastY)
+            CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta)
 
     # Finally send the report, yay !
     gp.send()

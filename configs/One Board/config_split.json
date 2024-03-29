@@ -1,11 +1,12 @@
 {
-	"general": {
-		"defaultMode": "versus"
+"general": {
+		"defaultMode": "versus",
+		"socdType": "LRN"
 	},
 	"modes" : {
-		"07": "bootloader",
-		"10": "versus",
-		"11": "smash"
+		"01": "bootloader",
+		"10": "smash",
+		"11": "versus"
 	},
 	"smash": {
 		"00": "None",
