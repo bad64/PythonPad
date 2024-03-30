@@ -1,9 +1,22 @@
+# LIW specific SOCD pseudo-defines
 SOCD_LEFT = -1
 SOCD_NEUTRAL = 0
 SOCD_RIGHT = 1
 
 def check_import():
+    # Canary function to check if the import went okay
     return True
+
+def safe_test(cfg, btn):
+    # Testing function to be used for buttons that *may or may not* be present in the config file
+    # In Versus mode you shouldn't need this ever, but...
+    # Y'know, there are a couple unused button masks in code.py... wink wink nudge nudge
+    for item in cfg:
+        try:
+            return item[btn].read()
+        except:
+            pass
+    return False
 
 def directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
         HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \

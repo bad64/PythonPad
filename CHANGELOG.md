@@ -1,3 +1,11 @@
+300324: (test)
+- README.md:
+	- Added a disclaimer that amounts to "Rulesets are wild, pls check with your TO"
+- code.py:
+	- Moved the safe\_test() function to the runtime files
+- All runtime files:
+	- Added a CPT compliant runtime file
+
 290324: (tested)
 - GamepadDriver.py:
 	- Renamed to gamepad\_driver.py for Pythonic complicance

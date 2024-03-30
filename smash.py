@@ -1,5 +1,16 @@
 def check_import():
+    # Canary function to check if the import went okay
     return True
+
+def safe_test(cfg, btn):
+    # Testing function to be used for buttons that *may or may not* be present in the config file
+    # Here I'm testing for V and W modifier keys for example
+    for item in cfg:
+        try:
+            return item[btn].read()
+        except:
+            pass
+    return False
 
 def directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
         HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
@@ -134,15 +145,15 @@ def directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
         rz = CENTER
         if AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH:
             z = MIN_TILT
-            if test(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
+            if safe_test(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
                 rz = MIN_TILT
-            elif test(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+            elif safe_test(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
                 rz = MAX_TILT
         elif AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW:
             z = MAX_TILT
-            if test(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
+            if safe_test(AllButtons["modifiers"], "MOD_V") or AllButtons["modifiers"]["MOD_X"].read() == LOW:
                 rz = MIN_TILT
-            elif test(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
+            elif safe_test(AllButtons["modifiers"], "MOD_W") or AllButtons["modifiers"]["MOD_Y"].read() == LOW:
                 rz = MAX_TILT
         elif (AllButtons["rightAnalog"]["C_LEFT"].read() == HIGH and AllButtons["rightAnalog"]["C_RIGHT"].read() == HIGH) \
         or (AllButtons["rightAnalog"]["C_LEFT"].read() == LOW and AllButtons["rightAnalog"]["C_RIGHT"].read() == LOW):

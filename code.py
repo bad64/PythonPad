@@ -94,15 +94,6 @@ class Button:
         # Returns the bitmask attached to the button (Mostly used for debugging purposes)
         return self._mask
 
-# Utility function to check if a button is defined in the config, then return its value
-def test(cfg, btn):
-    for item in cfg:
-        try:
-            return item[btn].read()
-        except:
-            pass
-    return False
-
 # Parse config from JSON file
 cfg = {}
 debugMode = False
@@ -170,7 +161,7 @@ try:
         gp.set_socd_type("LRN")
 except:
     print(f"{YELLOW}SOCD cleaner type absent; defaulting to \"LRN\"{DEFAULT}")
-    gp.det_socd_type("LRN")
+    gp.set_socd_type("LRN")
 
 ## Iterate over keys defined in the "modes" section
 try:

@@ -5,15 +5,17 @@
 This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) and [Gnome](https://github.com/bad64/OpenFightStick/tree/main/Gnome) controllers !  
 Here's what has been tested so far:
 
-| Board | MCU | Works ? | Comments
-| --- | --- | --- | --- | 
-| Raspberry Pi Pico | RP2040 | &#9989; | Literally made for it |
-| Adafruit Feather ESP32-S3 | ESP32-S3 | &#9989; | Tested on the 4MB Flash model|
-| ESP32-S3-DevKitC-1-N8R2 | ESP32-S3 | &#9989; | Powers the One Board |
+> [!IMPORTANT]
+> DISCLAIMER
+>
+> Due to the sheer variety in rulesets, what they allow and forbid, TO bias, and so forth, *I cannot guarantee your box will at all times be able to comply with every ruleset.* Compliance is therefore left to the care of the end user (aka you, most likely). I will not take the blame for rule infringement, regarding neither the software (this repo), the board, or its physical enclosure.
+> 
+> Basically if you show up at a major and TOs send you packing because your controller breaks stuff, it's a **Skill Issue** on your end. Consider yourselves warned &#x2665;&#xfe0f;  
+> <sup>Generally I would just create a per-ruleset config file but you do you</sub>
 
 ## What it do
 
-This is supposed to be the followup to my Pico-SDK based PicoPad. It features:
+This is the followup to my Pico-SDK based PicoPad. It features:
 
 - Human-readable and customizable keybindings, without needing to recompile or go through a web-based UI
 - Code that is <sup>(allegedly[^1])</sup> easier to maintain and extend
@@ -112,8 +114,6 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 
 ## TODO
 
-- SOCD cleaning types *(Working on it)*
-- Safe testing for every input
 - Clean up the code and make it more Pythonic
 
 [^1]: I do miss pointers though...
