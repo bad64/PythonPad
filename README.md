@@ -3,7 +3,6 @@
 # CircuitPython based all buttons all purpose (but mostly Smash) controller firmware
 
 This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) and [Gnome](https://github.com/bad64/OpenFightStick/tree/main/Gnome) controllers !  
-Here's what has been tested so far:
 
 > [!IMPORTANT]
 > DISCLAIMER
@@ -77,6 +76,8 @@ Through your config file, you can choose a SOCD cleaning method by assigning a v
 > [!NOTE]
 > In both cases, Up + Down will **always** resolve to Up !
 
+As of March 30th 2024, I have provided a CPT-compliant config in the `extras/` folder. There's probably going to be a couple more added down the line if and when needed.
+
 ## Updating the firmware
 
 Updating is pretty easy: Connect your controller to a computer, and copy over the `boot.py`, `gamepad_driver.py`, `VERSION` (optional), and `code.py` files, overwriting those present on the CIRCUITPYTHON drive. In theory, you shouldn't have to overwrite `config.json` and should be able to keep your configuration across all versions. (If the controller stops working after such an update, try uploading the default version of that file again)
@@ -115,6 +116,8 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 ## TODO
 
 - Clean up the code and make it more Pythonic
+- Tutorial on how to create config files
+- Maybe a configurator on a separate repo ?
 
 [^1]: I do miss pointers though...
 [^2]: It works pretty well on Tekken 8 too !
