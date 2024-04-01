@@ -1,11 +1,11 @@
 print("=== Initializing PythonPad ===")
-
+# Display version for debugging purposes
 try:
     with open("VERSION") as f:
         versionString = f.read()
-        print(f"Version {versionString}")
+        print(f"[\033[34mINFO\033[39m] Version {versionString}")
 except:
-    print("VERSION file not found; skipping check")
+    print("[\033[34mINFO\033[39m] VERSION file not found; skipping check")
 
 import board
 import digitalio
@@ -17,6 +17,22 @@ import usb_hid
 
 from gamepad_driver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT
 gp = Gamepad(usb_hid.devices)
+
+# Shortcut functions for things printed everywhere
+def INFO():
+    return f"[{BLUE}INFO{DEFAULT}]"
+
+def WARN():
+    return f"[{YELLOW}WARNING{DEFAULT}]"
+
+def ACTION():
+    return f"[{CYAN}ACTION{DEFAULT}]"
+
+def ERROR():
+    return f"[{RED}ERROR{DEFAULT}]"
+
+def DEBUG():
+    return f"[{VIOLET}DEBUG{DEFAULT}]"
 
 # Defining physical states
 HIGH = True
@@ -98,7 +114,7 @@ class Button:
 cfg = {}
 debugMode = False
 
-print("Reading config...")
+print(f"{ACTION()} Reading config...")
 with open("config.json") as f:
     cfg = json.load(f)
 
@@ -136,7 +152,7 @@ except KeyError:
     pass
 
 # Mode selection
-print("Running pre-checks...")
+print(f"{ACTION()} Running pre-checks...")
 mode = "smash"              ## We default to Smash mode in case of invalid or missing option
 try:
     ## Attempt to read the default mode from config
@@ -145,7 +161,7 @@ try:
         pass    ## No need to print, this is fine to silence since we print the boot
                 ## mode further down the line
     else:
-        print(f"{RED}Invalid mode: {mode}; defaulting to \"smash\"{DEFAULT}")
+        print(f"{WARN()} {YELLOW}Invalid mode: {mode}; defaulting to \"{GREEN}smash{YELLOW}\"{DEFAULT}")
         mode = "smash"
 except:
     pass
@@ -155,13 +171,26 @@ try:
     gp.set_socd_type(cfg["general"]["socdType"])
 
     if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
-        print(f"Set SOCD cleaner to {GREEN}{gp.get_socd_type()}{DEFAULT}")
+        print(f"{INFO()} Set SOCD cleaner to \"{GREEN}{gp.get_socd_type()}{DEFAULT}\"")
     else:
-        print(f"{RED}Invalid SOCD cleaner setting \"{gp.get_socd_type()}\"; defaulting to \"LRN\"{DEFAULT}")
+        print(f"{WARN()} {YELLOW}Invalid SOCD cleaner setting \"{gp.get_socd_type()}\"; defaulting to \"LRN\"{DEFAULT}")
         gp.set_socd_type("LRN")
 except:
-    print(f"{YELLOW}SOCD cleaner type absent; defaulting to \"LRN\"{DEFAULT}")
+    print(f"{WARN()} {YELLOW}SOCD cleaner type absent; defaulting to \"{GREEN}LRN{YELLOW}\"{DEFAULT}")
     gp.set_socd_type("LRN")
+
+has_server = False
+try:
+    import localserver
+    has_server = localserver.check_import()
+    print(f"{INFO()} Server code detected !")
+except Exception as e:
+    print(f"{ERROR()}{RED}", end="")
+    if "message" in dir(e):
+        print(e.message, end="")
+    else:
+        print(e, end="")
+    print(f"{DEFAULT}")
 
 ## Iterate over keys defined in the "modes" section
 try:
@@ -169,7 +198,8 @@ try:
         b = Button(k, None)
         if b.read() == LOW:
             if v == "bootloader":
-                print("We gotta reboot !")
+                print(f"{INFO()} We gotta reboot !")
+                time.sleep(2)
                 microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
                 microcontroller.reset()
             else:
@@ -177,14 +207,14 @@ try:
         b._io[0].deinit()  # Free the io pin for rebinding later
 except Exception as e:
     if "message" in dir(e):
-        print(f"{RED}ERROR: {e.message}{DEFAULT}")
+        print(f"{ERROR()}{RED}{e.message}{DEFAULT}")
     else:
-        print(f"{RED}ERROR: {e}{DEFAULT}")
+        print(f"{ERROR()}{RED}{e}{DEFAULT}")
 
 # Input binding
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
 
-print(f"Loading config: \"{mode}\"")
+print(f"{ACTION()} Loading config: \"{mode}\"")
 
 ## Deal with the modifiers first
 ### Save cycles by precalculating tilt values
@@ -207,63 +237,64 @@ for k,v in cfg[mode].items():
         modifiedXAxis = True
         try:
             xAxisModXDelta = round(int(eval(v)))
-            print(f"Set X axis MOD_X delta to {round(eval(v))}")
+            print(f"{INFO()} Set X axis MOD_X delta to {round(eval(v))}")
         except Exception as e:
             if 'message' in dir(e):
-                print(f"{RED}Cannot set X axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set X axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
             else:
-                print(f"{RED}Cannot set X axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set X axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
     elif k == "X_AXIS_MOD_Y_DELTA":
         modifiedXAxis = True
         try:
             xAxisModYDelta = round(int(eval(v)))
-            print(f"Set X axis MOD_Y delta to {round(eval(v))}")
+            print(f"{INFO()} Set X axis MOD_Y delta to {round(eval(v))}")
         except Exception as e:
             if 'message' in dir(e):
-                print(f"{RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
             else:
-                print(f"{RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
     elif k == "Y_AXIS_MOD_X_DELTA":
         modifiedYAxis = True
         try:
             yAxisModXDelta = round(int(eval(v)))
-            print(f"Set Y axis MOD_X delta to {round(eval(v))}")
+            print(f"{INFO()} Set Y axis MOD_X delta to {round(eval(v))}")
         except Exception as e:
             if 'message' in dir(e):
-                print(f"{RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
             else:
-                print(f"{RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
     elif k == "Y_AXIS_MOD_Y_DELTA":
         modifiedYAxis = True
         try:
             yAxisModYDelta = round(int(eval(v)))
-            print(f"Set Y axis MOD_Y delta to {round(eval(v))}")
+            print(f"{INFO()} Set Y axis MOD_Y delta to {round(eval(v))}")
         except Exception as e:
             if 'message' in dir(e):
-                print(f"{RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
             else:
-                print(f"{RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
+                print(f"{ERROR()} {RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
 
 ## Printing axis values over UART just to be sure nothing is on fire
-if modifiedXAxis:
-    print("New X axis values:")
-    print(f"    LEFT:           {MIN_TILT}")
-    print(f"    LEFT MOD_X:     {round(CENTER - xAxisModXDelta)}")
-    print(f"    LEFT MOD_Y:     {round(CENTER - xAxisModYDelta)}")
-    print(f"    CENTER:         {CENTER}")
-    print(f"    RIGHT MOD_Y:    {round(CENTER + xAxisModYDelta)}")
-    print(f"    RIGHT MOD_X:    {round(CENTER + xAxisModXDelta)}")
-    print(f"    RIGHT:          {MAX_TILT}")
+if debugMode:
+    if modifiedXAxis:
+        print(f"{DEBUG()} New X axis values:")
+        print(f"{DEBUG()}    LEFT:           {MIN_TILT}")
+        print(f"{DEBUG()}    LEFT MOD_X:     {round(CENTER - xAxisModXDelta)}")
+        print(f"{DEBUG()}    LEFT MOD_Y:     {round(CENTER - xAxisModYDelta)}")
+        print(f"{DEBUG()}    CENTER:         {CENTER}")
+        print(f"{DEBUG()}    RIGHT MOD_Y:    {round(CENTER + xAxisModYDelta)}")
+        print(f"{DEBUG()}    RIGHT MOD_X:    {round(CENTER + xAxisModXDelta)}")
+        print(f"{DEBUG()}    RIGHT:          {MAX_TILT}")
 
-if modifiedYAxis:
-    print("New Y axis values:")
-    print(f"    UP:             {MIN_TILT}")
-    print(f"    UP MOD_X:       {round(CENTER - yAxisModXDelta)}")
-    print(f"    UP MOD_Y:       {round(CENTER - yAxisModYDelta)}")
-    print(f"    CENTER:         {CENTER}")
-    print(f"    DOWN MOD_Y:     {round(CENTER + yAxisModYDelta)}")
-    print(f"    DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
-    print(f"    DOWN:           {MAX_TILT}")
+    if modifiedYAxis:
+        print(f"{DEBUG() }New Y axis values:")
+        print(f"{DEBUG()}    UP:             {MIN_TILT}")
+        print(f"{DEBUG()}    UP MOD_X:       {round(CENTER - yAxisModXDelta)}")
+        print(f"{DEBUG()}    UP MOD_Y:       {round(CENTER - yAxisModYDelta)}")
+        print(f"{DEBUG()}    CENTER:         {CENTER}")
+        print(f"{DEBUG()}    DOWN MOD_Y:     {round(CENTER + yAxisModYDelta)}")
+        print(f"{DEBUG()}    DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
+        print(f"{DEBUG()}    DOWN:           {MAX_TILT}")
 
 ## Now the rest of the inputs
 for k,v in cfg[mode].items():
@@ -294,7 +325,7 @@ for k,v in cfg[mode].items():
             else:
                     AllButtons["buttons"].append(Button(k, v))
             if debugMode == True:
-                print(f"Bound key \"{GREEN}{v}{DEFAULT}\" to input on pin {BLUE}{k}{DEFAULT}")
+                print(f"{INFO()} Bound key \"{GREEN}{v}{DEFAULT}\" to input on pin {BLUE}{k}{DEFAULT}")
     except ValueError as e:
         # This is expected behaviour; we merely hide it to the UART interface
         # See beginning of the try/except block
@@ -303,12 +334,12 @@ for k,v in cfg[mode].items():
         # Another exception has occured; we catch that and show
         # TODO: Maybe determine if the exception is recoverable ?
         if debugMode == True:
-            print(f"{YELLOW}Attempted to bind key \"{v}\" to pin {k} but failed{DEFAULT}")
-            print(f"{YELLOW}[{type(e)}]: {e}{DEFAULT}")
+            print(f"{WARN()} {YELLOW}Attempted to bind key \"{v}\" to pin {k} but failed{DEFAULT}")
+            print(f"{WARN()} {YELLOW}[{type(e)}]: {e}{DEFAULT}")
 
 # Import functions from the appropriate file
 try:
-    print(f"Importing main loop functions from {mode}.py... ", end="")
+    print(f"{ACTION()} Importing main loop functions from {mode}.py... ", end="")
     exec(f"from {mode} import check_import, directionals")
     if check_import() == True:
         print(f"[{GREEN}OK{DEFAULT}]")
@@ -317,6 +348,20 @@ try:
 except Exception as e:
     print(f"[{RED}KO{DEFAULT}]")
     raise e
+
+# If we have a server set up, start it now
+if has_server:
+    try:
+        localserver.localserver.start(str(localserver.wifi.radio.ipv4_address_ap))
+        print(f"{INFO()} Local server started with SSID \"{GREEN}{localserver.ap_ssid}{DEFAULT}\" on {GREEN}{str(localserver.wifi.radio.ipv4_address_ap)}{DEFAULT}")
+    except Exception as e:
+        print(f"{ERROR()} {RED}Local server failed to start !!{DEFAULT}")
+        print(f"{ERROR()}{RED} ", end="")
+        if "message" in dir(e):
+            print(e.message, end="")
+        else:
+            print(e, end="")
+        print(f"{DEFAULT}")
 
 # We're good to go, enter loop
 print("=== PythonPad starts ! ===")
@@ -343,3 +388,17 @@ while True:
 
     # Finally send the report, yay !
     gp.send()
+
+    # If we have a server running, poll and handle requests
+    if has_server:
+        try:
+            pool_result = localserver.localserver.poll()
+            if pool_result == localserver.REQUEST_HANDLED_RESPONSE_SENT:
+                print(f"{INFO()} Request served !")
+        except Exception as e:
+            print(f"{ERROR()} {RED}{type(e)}: ", end="")
+            if "message" in dir(e):
+                print(e.message)
+            else:
+                print(e)
+            print(f"{DEFAULT}")

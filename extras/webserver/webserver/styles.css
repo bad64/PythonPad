@@ -1,0 +1,15 @@
+body {
+	background: #D6AD60;
+}
+
+.innerContent {
+	padding: 10px;
+	border-radius: 5px;
+	background: #F4EBD0;
+	box-shadow: 5px 5px;
+}
+
+.easteregg {
+	color: black;
+	font-weight: bold;
+}

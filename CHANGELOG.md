@@ -1,3 +1,6 @@
+010424: (tested, and yes this is a real commit)
+- Added a webserver mode. So far it only allows one to view the running config, but hey you never know
+
 300324: (test)
 - README.md:
 	- Added a disclaimer that amounts to "Rulesets are wild, pls check with your TO"
