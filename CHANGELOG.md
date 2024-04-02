@@ -1,3 +1,9 @@
+030424: (tested)
+- code.py:
+	- Fixed a minor issue that caused an error message to be printed (instead of a warning) if the webserver code was absent
+- README.md:
+	- I think I want the main action buttons to be polled asynchronously
+
 010424: (tested, and yes this is a real commit)
 - Added a webserver mode. So far it only allows one to view the running config, but hey you never know
 

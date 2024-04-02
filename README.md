@@ -115,6 +115,7 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 
 ## TODO
 
+- Async button polling ?
 - Clean up the code and make it more Pythonic
 - Tutorial on how to create config files
 - Maybe a configurator on a separate repo ?

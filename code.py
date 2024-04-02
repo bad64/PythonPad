@@ -184,7 +184,11 @@ try:
     import localserver
     has_server = localserver.check_import()
     print(f"{INFO()} Server code detected !")
+except ImportError:
+    # Mask the error, it's harmless
+    print(f"{WARN()} Server config not found; skipping webserver")
 except Exception as e:
+    # Don't mask the error, it might not be harmless at all
     print(f"{ERROR()}{RED}", end="")
     if "message" in dir(e):
         print(e.message, end="")
