@@ -31,6 +31,18 @@ def ACTION():
 def ERROR():
     return f"[{RED}ERROR{DEFAULT}]"
 
+def errorhandler(e, panic=False):
+    print(f"{ERROR()} {RED}{type(e)}: ", end="")
+    if "message" in dir(e):
+        print(e.message, end="")
+    else:
+        print(e, end="")
+    print(f"{DEFAULT}")
+
+    if panic:
+        while(True):
+            pass
+
 def DEBUG():
     return f"[{VIOLET}DEBUG{DEFAULT}]"
 
@@ -161,7 +173,7 @@ try:
         pass    ## No need to print, this is fine to silence since we print the boot
                 ## mode further down the line
     else:
-        print(f"{WARN()} {YELLOW}Invalid mode: {mode}; defaulting to \"{GREEN}smash{YELLOW}\"{DEFAULT}")
+        print(f"{WARN()} Invalid mode: {mode}; defaulting to \"{GREEN}smash{DEFAULT}\"")
         mode = "smash"
 except:
     pass
@@ -173,10 +185,10 @@ try:
     if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
         print(f"{INFO()} Set SOCD cleaner to \"{GREEN}{gp.get_socd_type()}{DEFAULT}\"")
     else:
-        print(f"{WARN()} {YELLOW}Invalid SOCD cleaner setting \"{gp.get_socd_type()}\"; defaulting to \"LRN\"{DEFAULT}")
+        print(f"{WARN()} Invalid SOCD cleaner setting \"{RED}{gp.get_socd_type()}{DEFAULT}\"; defaulting to \"{GREEN}LRN{DEFAULT}\"")
         gp.set_socd_type("LRN")
 except:
-    print(f"{WARN()} {YELLOW}SOCD cleaner type absent; defaulting to \"{GREEN}LRN{YELLOW}\"{DEFAULT}")
+    print(f"{WARN()} SOCD cleaner type absent; defaulting to \"{GREEN}LRN{DEFAULT}\"")
     gp.set_socd_type("LRN")
 
 has_server = False
@@ -189,12 +201,7 @@ except ImportError:
     print(f"{WARN()} Server config not found; skipping webserver")
 except Exception as e:
     # Don't mask the error, it might not be harmless at all
-    print(f"{ERROR()}{RED}", end="")
-    if "message" in dir(e):
-        print(e.message, end="")
-    else:
-        print(e, end="")
-    print(f"{DEFAULT}")
+    errorhandler(e)
 
 ## Iterate over keys defined in the "modes" section
 try:
@@ -210,10 +217,7 @@ try:
                 mode = v
         b._io[0].deinit()  # Free the io pin for rebinding later
 except Exception as e:
-    if "message" in dir(e):
-        print(f"{ERROR()}{RED}{e.message}{DEFAULT}")
-    else:
-        print(f"{ERROR()}{RED}{e}{DEFAULT}")
+    errorhandler(e)
 
 # Input binding
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
@@ -226,19 +230,13 @@ xAxisModXDelta = CENTER - round(CENTER * (2/3))
 xAxisModYDelta = CENTER - round(CENTER * (1/3))
 yAxisModXDelta = CENTER - round(CENTER * (2/3))
 yAxisModYDelta = CENTER - round(CENTER * (1/3))
-zAxisModXDelta = CENTER - round(CENTER * (1/2))
-zAxisModYDelta = CENTER - round(CENTER * (1/2))
-rzAxisModXDelta = CENTER - round(CENTER * (1/2))
-rzAxisModYDelta = CENTER - round(CENTER * (1/2))
-
-modifiedXAxis = False
-modifiedYAxis = False
-modifiedZAxis = False
-modifiedRZAxis = False
+#zAxisModXDelta = CENTER - round(CENTER * (1/2))
+#zAxisModYDelta = CENTER - round(CENTER * (1/2))
+#rzAxisModXDelta = CENTER - round(CENTER * (1/2))
+#rzAxisModYDelta = CENTER - round(CENTER * (1/2))
 
 for k,v in cfg[mode].items():
     if k == "X_AXIS_MOD_X_DELTA":
-        modifiedXAxis = True
         try:
             xAxisModXDelta = round(int(eval(v)))
             print(f"{INFO()} Set X axis MOD_X delta to {round(eval(v))}")
@@ -248,7 +246,6 @@ for k,v in cfg[mode].items():
             else:
                 print(f"{ERROR()} {RED}Cannot set X axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
     elif k == "X_AXIS_MOD_Y_DELTA":
-        modifiedXAxis = True
         try:
             xAxisModYDelta = round(int(eval(v)))
             print(f"{INFO()} Set X axis MOD_Y delta to {round(eval(v))}")
@@ -258,7 +255,6 @@ for k,v in cfg[mode].items():
             else:
                 print(f"{ERROR()} {RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
     elif k == "Y_AXIS_MOD_X_DELTA":
-        modifiedYAxis = True
         try:
             yAxisModXDelta = round(int(eval(v)))
             print(f"{INFO()} Set Y axis MOD_X delta to {round(eval(v))}")
@@ -268,7 +264,6 @@ for k,v in cfg[mode].items():
             else:
                 print(f"{ERROR()} {RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
     elif k == "Y_AXIS_MOD_Y_DELTA":
-        modifiedYAxis = True
         try:
             yAxisModYDelta = round(int(eval(v)))
             print(f"{INFO()} Set Y axis MOD_Y delta to {round(eval(v))}")
@@ -280,25 +275,27 @@ for k,v in cfg[mode].items():
 
 ## Printing axis values over UART just to be sure nothing is on fire
 if debugMode:
-    if modifiedXAxis:
-        print(f"{DEBUG()} New X axis values:")
-        print(f"{DEBUG()}    LEFT:           {MIN_TILT}")
-        print(f"{DEBUG()}    LEFT MOD_X:     {round(CENTER - xAxisModXDelta)}")
-        print(f"{DEBUG()}    LEFT MOD_Y:     {round(CENTER - xAxisModYDelta)}")
-        print(f"{DEBUG()}    CENTER:         {CENTER}")
-        print(f"{DEBUG()}    RIGHT MOD_Y:    {round(CENTER + xAxisModYDelta)}")
-        print(f"{DEBUG()}    RIGHT MOD_X:    {round(CENTER + xAxisModXDelta)}")
-        print(f"{DEBUG()}    RIGHT:          {MAX_TILT}")
+    print(f"{DEBUG()} X axis values:")
+    print(f"{DEBUG()}   ModX delta:     {xAxisModXDelta}")
+    print(f"{DEBUG()}   ModY delta:     {xAxisModYDelta}")
+    print(f"{DEBUG()}   LEFT:           {MIN_TILT}")
+    print(f"{DEBUG()}   LEFT MOD_X:     {round(CENTER - xAxisModXDelta)}")
+    print(f"{DEBUG()}   LEFT MOD_Y:     {round(CENTER - xAxisModYDelta)}")
+    print(f"{DEBUG()}   CENTER:         {CENTER}")
+    print(f"{DEBUG()}   RIGHT MOD_Y:    {round(CENTER + xAxisModYDelta)}")
+    print(f"{DEBUG()}   RIGHT MOD_X:    {round(CENTER + xAxisModXDelta)}")
+    print(f"{DEBUG()}   RIGHT:          {MAX_TILT}")
 
-    if modifiedYAxis:
-        print(f"{DEBUG() }New Y axis values:")
-        print(f"{DEBUG()}    UP:             {MIN_TILT}")
-        print(f"{DEBUG()}    UP MOD_X:       {round(CENTER - yAxisModXDelta)}")
-        print(f"{DEBUG()}    UP MOD_Y:       {round(CENTER - yAxisModYDelta)}")
-        print(f"{DEBUG()}    CENTER:         {CENTER}")
-        print(f"{DEBUG()}    DOWN MOD_Y:     {round(CENTER + yAxisModYDelta)}")
-        print(f"{DEBUG()}    DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
-        print(f"{DEBUG()}    DOWN:           {MAX_TILT}")
+    print(f"{DEBUG()} Y axis values:")
+    print(f"{DEBUG()}   ModX delta:     {yAxisModXDelta}")
+    print(f"{DEBUG()}   ModY delta:     {yAxisModYDelta}")
+    print(f"{DEBUG()}   UP:             {MIN_TILT}")
+    print(f"{DEBUG()}   UP MOD_X:       {round(CENTER - yAxisModXDelta)}")
+    print(f"{DEBUG()}   UP MOD_Y:       {round(CENTER - yAxisModYDelta)}")
+    print(f"{DEBUG()}   CENTER:         {CENTER}")
+    print(f"{DEBUG()}   DOWN MOD_Y:     {round(CENTER + yAxisModYDelta)}")
+    print(f"{DEBUG()}   DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
+    print(f"{DEBUG()}   DOWN:           {MAX_TILT}")
 
 ## Now the rest of the inputs
 for k,v in cfg[mode].items():
@@ -338,8 +335,8 @@ for k,v in cfg[mode].items():
         # Another exception has occured; we catch that and show
         # TODO: Maybe determine if the exception is recoverable ?
         if debugMode == True:
-            print(f"{WARN()} {YELLOW}Attempted to bind key \"{v}\" to pin {k} but failed{DEFAULT}")
-            print(f"{WARN()} {YELLOW}[{type(e)}]: {e}{DEFAULT}")
+            print(f"{WARN()} Attempted to bind key \"{v}\" to pin {k} but failed")
+            print(f"{WARN()} {type(e)}: {e}")
 
 # Import functions from the appropriate file
 try:
@@ -351,7 +348,7 @@ try:
         raise ImportError
 except Exception as e:
     print(f"[{RED}KO{DEFAULT}]")
-    raise e
+    errorhandler(e, panic=True)
 
 # If we have a server set up, start it now
 if has_server:
@@ -360,12 +357,7 @@ if has_server:
         print(f"{INFO()} Local server started with SSID \"{GREEN}{localserver.ap_ssid}{DEFAULT}\" on {GREEN}{str(localserver.wifi.radio.ipv4_address_ap)}{DEFAULT}")
     except Exception as e:
         print(f"{ERROR()} {RED}Local server failed to start !!{DEFAULT}")
-        print(f"{ERROR()}{RED} ", end="")
-        if "message" in dir(e):
-            print(e.message, end="")
-        else:
-            print(e, end="")
-        print(f"{DEFAULT}")
+        errorhandler(e)
 
 # We're good to go, enter loop
 print("=== PythonPad starts ! ===")
@@ -400,9 +392,4 @@ while True:
             if pool_result == localserver.REQUEST_HANDLED_RESPONSE_SENT:
                 print(f"{INFO()} Request served !")
         except Exception as e:
-            print(f"{ERROR()} {RED}{type(e)}: ", end="")
-            if "message" in dir(e):
-                print(e.message)
-            else:
-                print(e)
-            print(f"{DEFAULT}")
+            errorhandler(e)
