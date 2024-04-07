@@ -1,3 +1,13 @@
+070424: (tested)
+- In general:
+	- Increased readability of log messages (see uart.py)
+- code.py:
+	- Added asynchronicity to the main loop, which seems to massively improve reading of simultaneous button presses
+- gamepad\_driver.py:
+	- Cleaned up orphaned functions
+- README.md:
+	- Reflected codebase changes
+
 030424: (tested)
 - code.py:
 	- Fixed a minor issue that caused an error message to be printed (instead of a warning) if the webserver code was absent

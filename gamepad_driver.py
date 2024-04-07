@@ -5,15 +5,7 @@ import time
 
 from adafruit_hid import find_device
 
-# Colors
-RED = "\033[31m"
-YELLOW = "\033[33m"
-GREEN = "\033[32m"
-CYAN = "\033[36m"
-BLUE = "\033[34m"
-VIOLET = "\033[35m"
-WHITE = "\033[37m"
-DEFAULT = "\033[39m"
+from uart import INFO, ACTION, ERROR, OK, KO
 
 # Report structure
 REPORT_SIZE = 8
@@ -37,30 +29,14 @@ HAT_DOWN_LEFT = 5
 HAT_LEFT = 6
 HAT_UP_LEFT = 7
 
-# General functions
-def range_map(x, in_min, in_max, out_min, out_max):
-    return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
-
-def fits_in_1b(value):
-    a = bytearray(1)
-    try:
-        struct.pack_into("<B", a, 0, value)
-        return "Fits in 1 byte"
-    except:
-        return "Doesn't fit in 1 byte ??"
-
-def fits_in_2b(value):
-    a = bytearray(2)
-    try:
-        struct.pack_into("<H", a, 0, value)
-        return "Fits in 2 bytes"
-    except:
-        return "Doesn't fit in 2 bytes ??"
-
 class Gamepad:
     def __init__(self, devices):
-        print("Creating Gamepad device")
-        self._gamepad_device = find_device(devices, usage_page=0x1, usage=0x05)
+        print(f"{ACTION()} Creating Gamepad device ", end="")
+        try:
+            self._gamepad_device = find_device(devices, usage_page=0x1, usage=0x05)
+            print(f"{OK()}")
+        except Exception as e:
+            print(f"{KO()}")
 
         # report[0] buttons 1-8
         # report[1] buttons 9-16
@@ -69,8 +45,12 @@ class Gamepad:
         # report[4] joystick 0 y
         # report[5] joystick 1 x
         # report[6] joystick 1 y
-        print("Initializing report struct")
-        self._report = bytearray(8)
+        print(f"{ACTION()} Initializing report struct ", end="")
+        try:
+            self._report = bytearray(8)
+            print(f"{OK()}")
+        except Exception as e:
+            print(f"{KO()}")
 
         # Remember the last report as well, so we can avoid sending
         # duplicate reports.
@@ -91,14 +71,16 @@ class Gamepad:
 
         # Send an initial report to test if HID device is ready.
         # If not, wait a bit and try once more.
-        print("Trying to ready up device")
+        print(f"{ACTION()} Trying to ready up device")
         count = 0
         while True:
-            print("Attempt number {}".format(count + 1))
+            print(f"{ACTION()} > Attempt number {count + 1}... ", end="")
             try:
                 self.reset_all()
+                print(f"{OK()}")
                 break
             except OSError as e:
+                print(f"{KO()}")
                 if "message" in dir(e):
                     print(e.message)
                 else:
@@ -108,6 +90,7 @@ class Gamepad:
                     time.sleep(1)
                 else:
                     raise e
+        print(f"{INFO()} Gamepad init success !")
 
     def crashdump(self, report=None, e=None):
         print("=====GURU MEDITATION=====")

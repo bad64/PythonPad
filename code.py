@@ -7,6 +7,8 @@ try:
 except:
     print("[\033[34mINFO\033[39m] VERSION file not found; skipping check")
 
+# CircuitPython imports
+import asyncio
 import board
 import digitalio
 import json
@@ -15,22 +17,14 @@ import time
 import traceback
 import usb_hid
 
-from gamepad_driver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER, RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT
+# UART print functions
+from uart import RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT, INFO, WARN, ACTION, ERROR, DEBUG, OK, KO, CONFUSED
+
+# Main gamepad driver
+from gamepad_driver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER 
 gp = Gamepad(usb_hid.devices)
 
-# Shortcut functions for things printed everywhere
-def INFO():
-    return f"[{BLUE}INFO{DEFAULT}]"
-
-def WARN():
-    return f"[{YELLOW}WARNING{DEFAULT}]"
-
-def ACTION():
-    return f"[{CYAN}ACTION{DEFAULT}]"
-
-def ERROR():
-    return f"[{RED}ERROR{DEFAULT}]"
-
+# Generic error handler with optional panic
 def errorhandler(e, panic=False):
     print(f"{ERROR()} {RED}{type(e)}: ", end="")
     if "message" in dir(e):
@@ -42,9 +36,6 @@ def errorhandler(e, panic=False):
     if panic:
         while(True):
             pass
-
-def DEBUG():
-    return f"[{VIOLET}DEBUG{DEFAULT}]"
 
 # Defining physical states
 HIGH = True
@@ -97,7 +88,7 @@ elif "espressif_esp32s3" in board.board_id:
 # Anthropomorphic definition of a Button
 class Button:
     def __init__(self, pin, mappedInput):
-        # Declares a Button, with its associated pin and the input it triggers on the host
+        # Declares a Button, with its associated pin and output
         self._pins = [ int(pin) ]
         try:
             self._mask = eval("MASK_{}".format(mappedInput))
@@ -138,7 +129,7 @@ try:
         if item == "debug" and cfg["general"][item] == True:
             debugMode = True
             if debugMode == True:
-                print(f"{GREEN}\t> Debug mode ON{DEFAULT}")
+                print(f"{INFO()}{GREEN}\t> Debug mode ON{DEFAULT}")
                 time.sleep(1)
         elif item == "motd" and cfg["general"][item] == "knock knock":
             import random
@@ -158,50 +149,28 @@ try:
                     "Did you know: entering Up, Up, Down, Down, Left, Right, Left, Right, B, A, and Start during the boot up sequence does nothing !"
                     ]
             r = random.randint(0, len(motd)-1)
-            print(f"{CYAN}\t> {motd[r]}{DEFAULT}")
+            print(f"{INFO()}{CYAN}\t> {motd[r]}{DEFAULT}")
             time.sleep(1)
 except KeyError:
+    # If for whatever reason we do not have a "general" section
+    # we just skip this and pray
     pass
 
 # Mode selection
-print(f"{ACTION()} Running pre-checks...")
+print(f"{INFO()} Running pre-checks")
+print(f"{ACTION()} Selecting mode... ", end="")
 mode = "smash"              ## We default to Smash mode in case of invalid or missing option
 try:
     ## Attempt to read the default mode from config
     mode = cfg["general"]["defaultMode"]
     if mode in cfg["modes"].values() and mode != "bootloader":
-        pass    ## No need to print, this is fine to silence since we print the boot
-                ## mode further down the line
+        print(f"{OK()}")
     else:
+        print(f"{CONFUSED()}")
         print(f"{WARN()} Invalid mode: {mode}; defaulting to \"{GREEN}smash{DEFAULT}\"")
         mode = "smash"
 except:
     pass
-
-gp.set_socd_type("LRN")     ## Again, default value for safety
-try:
-    gp.set_socd_type(cfg["general"]["socdType"])
-
-    if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
-        print(f"{INFO()} Set SOCD cleaner to \"{GREEN}{gp.get_socd_type()}{DEFAULT}\"")
-    else:
-        print(f"{WARN()} Invalid SOCD cleaner setting \"{RED}{gp.get_socd_type()}{DEFAULT}\"; defaulting to \"{GREEN}LRN{DEFAULT}\"")
-        gp.set_socd_type("LRN")
-except:
-    print(f"{WARN()} SOCD cleaner type absent; defaulting to \"{GREEN}LRN{DEFAULT}\"")
-    gp.set_socd_type("LRN")
-
-has_server = False
-try:
-    import localserver
-    has_server = localserver.check_import()
-    print(f"{INFO()} Server code detected !")
-except ImportError:
-    # Mask the error, it's harmless
-    print(f"{WARN()} Server config not found; skipping webserver")
-except Exception as e:
-    # Don't mask the error, it might not be harmless at all
-    errorhandler(e)
 
 ## Iterate over keys defined in the "modes" section
 try:
@@ -219,6 +188,24 @@ try:
 except Exception as e:
     errorhandler(e)
 
+# SOCD selection
+print(f"{ACTION()} Setting up SOCD cleaning... ", end="")
+gp.set_socd_type("LRN")     ## Again, default value for safety
+try:
+    gp.set_socd_type(cfg["general"]["socdType"])
+
+    if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
+        print(f"{OK()}")
+        print(f"{INFO()} Set SOCD cleaner to \"{GREEN}{gp.get_socd_type()}{DEFAULT}\"")
+    else:
+        print(f"{KO()}")
+        print(f"{WARN()} Invalid SOCD cleaner setting \"{RED}{gp.get_socd_type()}{DEFAULT}\"; defaulting to \"{GREEN}LRN{DEFAULT}\"")
+        gp.set_socd_type("LRN")
+except:
+    print(f"{CONFUSED()}")
+    print(f"{WARN()} SOCD cleaner type absent; defaulting to \"{GREEN}LRN{DEFAULT}\"")
+    gp.set_socd_type("LRN")
+
 # Input binding
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
 
@@ -230,10 +217,6 @@ xAxisModXDelta = CENTER - round(CENTER * (2/3))
 xAxisModYDelta = CENTER - round(CENTER * (1/3))
 yAxisModXDelta = CENTER - round(CENTER * (2/3))
 yAxisModYDelta = CENTER - round(CENTER * (1/3))
-#zAxisModXDelta = CENTER - round(CENTER * (1/2))
-#zAxisModYDelta = CENTER - round(CENTER * (1/2))
-#rzAxisModXDelta = CENTER - round(CENTER * (1/2))
-#rzAxisModYDelta = CENTER - round(CENTER * (1/2))
 
 for k,v in cfg[mode].items():
     if k == "X_AXIS_MOD_X_DELTA":
@@ -351,6 +334,19 @@ except Exception as e:
     errorhandler(e, panic=True)
 
 # If we have a server set up, start it now
+has_server = False
+try:
+    import localserver
+    has_server = localserver.check_import()
+    print(f"{INFO()} Server code detected !")
+except ImportError:
+    # Mask the error, it just means we don't have one
+    if debugMode == True:
+        print(f"{DEBUG()} Server config not found; skipping webserver")
+except Exception as e:
+    # Don't mask the error, it might not be harmless at all
+    errorhandler(e)
+
 if has_server:
     try:
         localserver.localserver.start(str(localserver.wifi.radio.ipv4_address_ap))
@@ -359,37 +355,45 @@ if has_server:
         print(f"{ERROR()} {RED}Local server failed to start !!{DEFAULT}")
         errorhandler(e)
 
-# We're good to go, enter loop
-print("=== PythonPad starts ! ===")
-
-while True:
-    # Buttons
-    ## This is shared between all modes, don't touch it
-    gp.reset_buttons()
-
+# Define action button polling as asynchronous to the main loop
+async def poll_buttons():
     for b in AllButtons["buttons"]:
         if b.read() == LOW:
             gp.press_button(b.mask())
+    await asyncio.sleep_ms(0)
 
-    # Handle directional input in separate files for easier readability
-    x = CENTER
-    y = CENTER
-    z = CENTER
-    rz = CENTER
+async def main():
+    while True:
+        # Buttons
+        ## This is shared between all modes, don't touch it
+        gp.reset_buttons()
+        btns_task = asyncio.create_task(poll_buttons())
+        await asyncio.gather(btns_task)
 
-    ## TODO: de-fuglify this call smh
-    directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
-            HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
-            CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta)
+        # Handle directional input in separate files for easier readability
+        x = CENTER
+        y = CENTER
+        z = CENTER
+        rz = CENTER
 
-    # Finally send the report, yay !
-    gp.send()
+        ## TODO: de-fuglify this call smh
+        directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
+                HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
+                CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta)
 
-    # If we have a server running, poll and handle requests
-    if has_server:
-        try:
-            pool_result = localserver.localserver.poll()
-            if pool_result == localserver.REQUEST_HANDLED_RESPONSE_SENT:
-                print(f"{INFO()} Request served !")
-        except Exception as e:
-            errorhandler(e)
+        # Finally send the report, yay !
+        gp.send()
+
+        # If we have a server running, poll and handle requests
+        if has_server:
+            try:
+                pool_result = localserver.localserver.poll()
+                if pool_result == localserver.REQUEST_HANDLED_RESPONSE_SENT:
+                    print(f"{INFO()} Request served !")
+            except Exception as e:
+                errorhandler(e)
+
+# We're good to go, enter loop
+print("=== PythonPad starts ! ===")
+
+asyncio.run(main())

@@ -35,8 +35,9 @@ Depends on:
 - CircuitPython >= 8.2.9
 - adafruit\_hid (available in the [CircuitPython Library Bundle](https://circuitpython.org/libraries))
 - adafruit\_ticks.mpy (same as above)
+- asyncio (guess)
 
-Flash the CircuitPython UF2 file to your microcontroller, then extract the libs (that is both the MPY file and the entire `adafruit_hid` folder) to the `lib` directory of your CircuitPython drive. If you're having doubts, I suggest clicking on the CircuitPython badge at the top of this README, and follow their installation guide, though it will give you basically the same steps.
+Flash the CircuitPython UF2 file to your microcontroller, then extract the libs (that is both the MPY file and the entire `adafruit_hid` and `asyncio` folders) to the `lib` directory of your CircuitPython drive. If you're having doubts, I suggest clicking on the CircuitPython badge at the top of this README, and follow their installation guide, though it will give you basically the same steps.
 
 *Then* drag and drop the main files (see below) into the drive. Unplug and replug your device to make it run `boot.py` again.
 
@@ -45,16 +46,21 @@ Flash the CircuitPython UF2 file to your microcontroller, then extract the libs 
 
 ## But how it do tho ?
 
-Once you're all set up, when plugged into a computer, it will show up as both a HID device and a storage device because of CircuitPython [deep magic](http://www.catb.org/jargon/html/D/deep-magic.html). This drive should be invisible to consoles (maybe ? The Switch doesn't care about it at least) and hosts a variety of files. We will focus on four:
+Once you're all set up, when plugged into a computer, it will show up as both a HID device and a storage device because of CircuitPython [deep magic](http://www.catb.org/jargon/html/D/deep-magic.html). This drive should be invisible to consoles (maybe ? The Switch doesn't care about it at least) and hosts a variety of files. We will focus on these:
 
 - `boot.py` contains the HID report descriptor and the HID init code. It's probably a good idea to leave it alone. **You can softlock yourself out of that drive if you freestyle too much.** (It's fixable by forcing your device into bootloader mode and reflashing CircuitPython though, but you still should be appropriately scared when doing things to this file)
 - `gamepad_driver.py` is, as the name subtly implies, ~~a library to control your fridge via MQTT~~ the driver implementation of the Gamepad class. Again, probably best to not touch it, though it's a lot less sensitive than `boot.py`
 - `code.py` is the main loop. You can screw around with it, it's probably the one that is going to do the least damage to your flash memory, unless you decide to write whole megabytes to it for some reason
-- `VERSION` is an optional file telling the firmware to output its version number. Only really useful for debugging
-- `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board anyway
+- `uart.py` isn't directly useful to you as an end user, but provides a lot of debug related stuff. For now it's a required file
 - And finally, one configuration file, in JSON format. See the `config/` subdirectory and their associated README files
 
 The file consists of pairs of keys and values (as most JSON files tend to be written as, at a surface level anyway). The keys are pin numbers (again, relative to the RP2040 and my own Hydra board; adapt to your own use), and the values correspond to which input is tied to that particular pin. This technically means you can tie an input to more than one pin, but one pin cannot trigger more than one input (nor is that a desirable feature, according to some rulesets. Consult your local TO for advice before use)
+
+> [!NOTE]
+> There are a few optional files. The entirety of the `extras` folder counts, but also:
+>
+> - `VERSION` is an optional file telling the firmware to output its version number. Only really useful for debugging
+> - `CHANGELOG.md` and `LICENSE` can be ignored. They won't do anything when uploaded to the board anyway
 
 ## Oh yeah there's a traditional versus fighting mode too
 
@@ -115,9 +121,8 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 
 ## TODO
 
-- Async button polling ?
 - Clean up the code and make it more Pythonic
-- Tutorial on how to create config files
+- Tutorial on how to create config files/Full-on user manual
 - Maybe a configurator on a separate repo ?
 
 [^1]: I do miss pointers though...
