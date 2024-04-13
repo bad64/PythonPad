@@ -1,8 +1,25 @@
-130424: (testing underway)
+140424: (rolled over from previous commit; I need to stop coding late at night...)
+- code.py:
+	- Removed 130424's watchdog related code; the d/cs are from a *different* watchdog (pending investigation)
+	- Allow the code to load a specific file via a new property
+- All configs:
+	- New property: `file`: Indicates which .py file should be loaded (defaults to the mode name if the property isn't present)  
+	The .py extension **must be omitted** !!
+
+130424: (tested)
 - code.py:
 	- Moved the uart.py import to the top of the file because it actually has no genuine reason to *not* be there
 	- Disabled watchdog timer whom sometimes led to impromptu d/cs
 	- Harmonized formatting for the last couple of debug messages
+	- Increased verbosity of messages (again)
+	- Mode and SOCD type checking are now more thorough
+	- SOCD cleaning types are now per-mode instead of global
+- All configs:
+	- New property: `canonName`: Allows you to give your mode a prettier name than the rather succint one used as the top level JSON property
+	- `socdType` is now a second-level property in accordance with the changes in `code.py`
+	- Most config files are not up to date with this change yet !!
+- New file: custom\_runtime\_exceptions.py
+	- Defines runtime exceptions that I deem in need of their own class
 - VERSION:
 	- Moved to 0.9.9 RC; if this weekend's tests run well, I will merge into main as the 1.0 release
 

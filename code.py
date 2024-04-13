@@ -20,9 +20,14 @@ import time
 import traceback
 import usb_hid
 
-# Disable watchdog
+# Runtime exceptions
+import custom_runtime_exceptions as cre
+
+# Hardware watchdog
+from watchdog import WatchDogMode
 wdt = microcontroller.watchdog
 wdt.mode = None
+wdt.timeout = 5
 
 # Main gamepad driver
 from gamepad_driver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER 
@@ -157,31 +162,37 @@ try:
             time.sleep(1)
 except KeyError:
     # If for whatever reason we do not have a "general" section
-    # we just skip this and pray
+    # we just skip this and pray to the dark gods
     pass
 
 # Mode selection
 print(f"{INFO()} Running pre-checks")
 print(f"{ACTION()} Selecting mode... ", end="")
 mode = "smash"              ## We default to Smash mode in case of invalid or missing option
-try:
-    ## Attempt to read the default mode from config
-    mode = cfg["general"]["defaultMode"]
-    if mode in cfg["modes"].values() and mode != "bootloader":
-        print(f"{OK()}")
-    else:
-        print(f"{CONFUSED()}")
-        print(f"{WARN()} Invalid mode: {mode}; defaulting to \"{GREEN}smash{DEFAULT}\"")
-        mode = "smash"
-except:
-    pass
 
-## Iterate over keys defined in the "modes" section
+## Attempt to read default mode from config
+warn_user_about_absent_default_mode = False
+warn_user_about_wrong_default_mode = False
+try:
+    mode = cfg["general"]["defaultMode"]
+
+    if mode in cfg["modes"].values() and mode != "bootloader":
+        pass
+    else:
+        raise cre.WrongDefaultModeException(mode)
+except KeyError:
+    ### Set flag for warning user down the line
+    warn_user_about_absent_default_mode = True
+except cre.WrongDefaultModeException:
+    warn_user_about_wrong_default_mode = True
+
+## Scan for mode selection
 try:
     for k,v in cfg["modes"].items():
         b = Button(k, None)
         if b.read() == LOW:
             if v == "bootloader":
+                print(f"{OK()}")
                 print(f"{INFO()} We gotta reboot !")
                 time.sleep(2)
                 microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
@@ -192,28 +203,54 @@ try:
 except Exception as e:
     errorhandler(e)
 
+## Print out to serial
+if warn_user_about_absent_default_mode:
+    print("\"{}???{}\" {}".format(RED, DEFAULT, KO()))
+    print(f"{WARN()} \"defaultMode\" property missing from the \"general\" section of the config; Defaulting to \"{GREEN}smash{DEFAULT}\" mode")
+
+    mode = "smash"
+elif warn_user_about_wrong_default_mode:
+    print("\"{}{}{}\" {}".format(RED, mode, DEFAULT, KO()))
+    print(f"{WARN()} \"{RED}{mode}{DEFAULT}\" is not a cromulent default value; Defaulting to \"{GREEN}smash{DEFAULT}\" mode")
+
+    mode = "smash"
+else:
+    try:
+        print("\"{}{}{}\" {}".format(GREEN, cfg[mode]["canonName"], DEFAULT, OK()))
+    except KeyError:
+        print("\"{}{}{}\" {}".format(GREEN, mode, DEFAULT, OK()))
+        if debugMode:
+            print(f"{DEBUG()} No \"{RED}canonName{DEFAULT}\" property for mode \"{GREEN}{mode}{DEFAULT}\"")
+
 # SOCD selection
 print(f"{ACTION()} Setting up SOCD cleaning... ", end="")
 gp.set_socd_type("LRN")     ## Again, default value for safety
 try:
-    gp.set_socd_type(cfg["general"]["socdType"])
+    gp.set_socd_type(cfg[mode]["socdType"])
 
-    if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
-        print(f"{OK()}")
-        print(f"{INFO()} Set SOCD cleaner to \"{GREEN}{gp.get_socd_type()}{DEFAULT}\"")
+    if mode not in [ "cpt" ]:   # List subject to expansion
+        if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
+            print(f"{OK()}")
+            print(f"{INFO()} Set SOCD cleaner to \"{GREEN}{gp.get_socd_type()}{DEFAULT}\"")
+        else:
+            raise cre.WrongSOCDCleaningTypeException(gp.get_socd_type())
     else:
-        print(f"{KO()}")
-        print(f"{WARN()} Invalid SOCD cleaner setting \"{RED}{gp.get_socd_type()}{DEFAULT}\"; defaulting to \"{GREEN}LRN{DEFAULT}\"")
-        gp.set_socd_type("LRN")
-except:
+        print(f"{OK()}")
+        if mode == "cpt":
+            print(f"{INFO()} Set SOCD cleaner to \"{GREEN}Capcom Pro Tour{DEFAULT}\" compliant mode")
+except KeyError:
     print(f"{CONFUSED()}")
     print(f"{WARN()} SOCD cleaner type absent; defaulting to \"{GREEN}LRN{DEFAULT}\"")
+    gp.set_socd_type("LRN")
+except cre.WrongSOCDCleaningTypeException as e:
+    print(f"{KO()}")
+    print(f"{WARN()} \"{RED}{e.mode}{DEFAULT}\" does not name an SOCD cleaning type; defaulting to \"{GREEN}LRN{DEFAULT}\"")
     gp.set_socd_type("LRN")
 
 # Input binding
 AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
 
-print(f"{ACTION()} Loading config: \"{mode}\"")
+print(f"{ACTION()} Loading config: \"{GREEN}{mode}{DEFAULT}\"")
 
 ## Deal with the modifiers first
 ### Save cycles by precalculating tilt values
@@ -261,7 +298,7 @@ for k,v in cfg[mode].items():
                 print(f"{ERROR()} {RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
 
 ## Printing axis values over UART just to be sure nothing is on fire
-if debugMode:
+if debugMode and mode == "smash":
     print(f"{DEBUG()} X axis values:")
     print(f"{DEBUG()}   ModX delta:     {xAxisModXDelta}")
     print(f"{DEBUG()}   ModY delta:     {xAxisModYDelta}")
@@ -327,8 +364,12 @@ for k,v in cfg[mode].items():
 
 # Import functions from the appropriate file
 try:
-    print(f"{ACTION()} Importing main loop functions from {mode}.py... ", end="")
-    exec(f"from {mode} import check_import, directionals")
+    try:
+        runtime_file = cfg[mode]["file"]
+    except KeyError:
+        runtime_file = mode
+    print(f"{ACTION()} Importing main loop functions from {runtime_file}.py... ", end="")
+    exec(f"from {runtime_file} import check_import, directionals")
     if check_import() == True:
         print(f"[{GREEN}OK{DEFAULT}]")
     else:
@@ -368,34 +409,43 @@ async def poll_buttons():
 
 async def main():
     while True:
-        # Buttons
-        ## This is shared between all modes, don't touch it
-        gp.reset_buttons()
-        btns_task = asyncio.create_task(poll_buttons())
-        await asyncio.gather(btns_task)
+        try:
+            # Buttons
+            ## This is shared between all modes, don't touch it
+            gp.reset_buttons()
+            btns_task = asyncio.create_task(poll_buttons())
+            await asyncio.gather(btns_task)
 
-        # Handle directional input in separate files for easier readability
-        x = CENTER
-        y = CENTER
-        z = CENTER
-        rz = CENTER
+            # Handle directional input in separate files for easier readability
+            x = CENTER
+            y = CENTER
+            z = CENTER
+            rz = CENTER
 
-        ## TODO: de-fuglify this call smh
-        directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
-                HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
-                CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta)
+            ## TODO: de-fuglify this call smh
+            directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
+                    HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
+                    CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta)
 
-        # Finally send the report, yay !
-        gp.send()
+            # Finally send the report, yay !
+            gp.send()
 
-        # If we have a server running, poll and handle requests
-        if has_server:
-            try:
-                pool_result = localserver.localserver.poll()
-                if pool_result == localserver.REQUEST_HANDLED_RESPONSE_SENT:
-                    print(f"{INFO()} Request served !")
-            except Exception as e:
-                errorhandler(e)
+            # If we have a server running, poll and handle requests
+            if has_server:
+                try:
+                    pool_result = localserver.localserver.poll()
+                    if pool_result == localserver.REQUEST_HANDLED_RESPONSE_SENT:
+                        print(f"{INFO()} Request served !")
+                except Exception as e:
+                    errorhandler(e)
+
+            # Feed the watchdog
+            wdt.feed()
+        # Catch the watchdog exceptions
+        except watchdog.WatchDogTimeout as e:
+            print(f"{INFO()} {e}")
+        # TODO: Define other runtime exceptions ?
+
 
 # We're good to go, enter loop
 print(f"{ACTION()} {GREEN}All systems go ! Entering main loop !{DEFAULT}")

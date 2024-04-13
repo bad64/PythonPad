@@ -30,7 +30,7 @@ def OK():
     return f"{DEFAULT}[{GREEN}OK{DEFAULT}]"
 
 def KO():
-    return f"{DEFAULT}[{GREEN}KO{DEFAULT}]"
+    return f"{DEFAULT}[{RED}KO{DEFAULT}]"
 
 def CONFUSED():
     return f"{DEFAULT}[{YELLOW}??{DEFAULT}]"
