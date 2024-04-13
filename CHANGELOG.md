@@ -1,3 +1,11 @@
+130424: (testing underway)
+- code.py:
+	- Moved the uart.py import to the top of the file because it actually has no genuine reason to *not* be there
+	- Disabled watchdog timer whom sometimes led to impromptu d/cs
+	- Harmonized formatting for the last couple of debug messages
+- VERSION:
+	- Moved to 0.9.9 RC; if this weekend's tests run well, I will merge into main as the 1.0 release
+
 070424: (tested)
 - In general:
 	- Increased readability of log messages (see uart.py)

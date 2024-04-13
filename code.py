@@ -1,11 +1,14 @@
-print("=== Initializing PythonPad ===")
+# UART print functions
+from uart import RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT, INFO, WARN, ACTION, ERROR, DEBUG, OK, KO, CONFUSED
+
+print(f"{ACTION()} Initializing PythonPad")
 # Display version for debugging purposes
 try:
     with open("VERSION") as f:
         versionString = f.read()
-        print(f"[\033[34mINFO\033[39m] Version {versionString}")
+        print(f"{INFO()} Version {versionString}", end="")
 except:
-    print("[\033[34mINFO\033[39m] VERSION file not found; skipping check")
+    print("{CONFUSED()} VERSION file not found; skipping check")
 
 # CircuitPython imports
 import asyncio
@@ -17,8 +20,9 @@ import time
 import traceback
 import usb_hid
 
-# UART print functions
-from uart import RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT, INFO, WARN, ACTION, ERROR, DEBUG, OK, KO, CONFUSED
+# Disable watchdog
+wdt = microcontroller.watchdog
+wdt.mode = None
 
 # Main gamepad driver
 from gamepad_driver import Gamepad, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, HAT_CENTER 
@@ -64,8 +68,8 @@ MASK_L3 =           0b0000010000000000
 MASK_R3 =           0b0000100000000000
 MASK_HOME =         0b0001000000000000
 MASK_CAPTURE =      0b0010000000000000
-MASK_UNUSED1 =      0b0100000000000000
-MASK_UNUSED2 =      0b1000000000000000
+MASK_UNUSED1 =      0b0100000000000000      # Note that these are *actually* unused and most games won't let you bind them
+MASK_UNUSED2 =      0b1000000000000000      # joy.cpl sees them though ?
 
 ## For regular fighting games
 MASK_VS_1P =        MASK_Y
@@ -394,6 +398,6 @@ async def main():
                 errorhandler(e)
 
 # We're good to go, enter loop
-print("=== PythonPad starts ! ===")
+print(f"{ACTION()} {GREEN}All systems go ! Entering main loop !{DEFAULT}")
 
 asyncio.run(main())
