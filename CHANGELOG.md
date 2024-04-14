@@ -1,6 +1,7 @@
 140424: (rolled over from previous commit; I need to stop coding late at night...)
 - code.py:
 	- Removed 130424's watchdog related code; the d/cs are from a *different* watchdog (pending investigation)
+	- Related to the above: made button polling synchronous again as a stopgap measure
 	- Allow the code to load a specific file via a new property
 - All configs:
 	- New property: `file`: Indicates which .py file should be loaded (defaults to the mode name if the property isn't present)  

@@ -24,7 +24,7 @@ import usb_hid
 import custom_runtime_exceptions as cre
 
 # Hardware watchdog
-from watchdog import WatchDogMode
+from watchdog import WatchDogMode, WatchDogTimeout
 wdt = microcontroller.watchdog
 wdt.mode = None
 wdt.timeout = 5
@@ -401,20 +401,22 @@ if has_server:
         errorhandler(e)
 
 # Define action button polling as asynchronous to the main loop
-async def poll_buttons():
+#async def poll_buttons():
+def poll_buttons():
     for b in AllButtons["buttons"]:
         if b.read() == LOW:
             gp.press_button(b.mask())
-    await asyncio.sleep_ms(0)
+    #await asyncio.sleep_ms(0)
 
-async def main():
+#async def main():
+def main():
     while True:
         try:
             # Buttons
             ## This is shared between all modes, don't touch it
             gp.reset_buttons()
-            btns_task = asyncio.create_task(poll_buttons())
-            await asyncio.gather(btns_task)
+            #await asyncio.gather(poll_buttons())
+            poll_buttons()
 
             # Handle directional input in separate files for easier readability
             x = CENTER
@@ -442,12 +444,12 @@ async def main():
             # Feed the watchdog
             wdt.feed()
         # Catch the watchdog exceptions
-        except watchdog.WatchDogTimeout as e:
-            print(f"{INFO()} {e}")
+        except WatchDogTimeout as e:
+            if debugMode:
+                print(f"{DEBUG()} {e}")
         # TODO: Define other runtime exceptions ?
-
 
 # We're good to go, enter loop
 print(f"{ACTION()} {GREEN}All systems go ! Entering main loop !{DEFAULT}")
-
-asyncio.run(main())
+#asyncio.run(main())
+main()
