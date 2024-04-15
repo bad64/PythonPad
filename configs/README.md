@@ -54,6 +54,54 @@ You need at least one. I would recommend defining a `smash` section at least due
 
 Out of an abundance of caution, you should not alter the number of pins defined in a config file. If a pin isn't defined in the config file, there is usually a very good reason ! Beware of [dragons](https://en.wikipedia.org/wiki/Here_be_dragons).
 
+A complete, working config should look approximately like this:
+
+```json
+{
+    "general": {
+        "defaultMode": "versus"
+    },
+    "modes": {
+        "07": "bootloader",
+        "10": "smash",
+        "11": "versus",
+    },
+    "smash": {
+        "socdType": "LIW",
+		"00": "None",
+		"01": "START",
+		"02": "SELECT",
+        --- Cut for brevity ---
+		"21": "B",
+		"35": "ZR",
+		"36": "ZL",
+		"37": "Y",
+		"38": "None",
+		"39": "None",
+		"40": "R3",
+		"41": "L3",
+		"42": "HOME",
+        --- Cut for brevity ---
+		"47": "X",
+		"48": "R"
+    },
+    "versus": {
+        "socdType": "LRN",
+		"00": "None",
+		"01": "START",
+		"02": "SELECT",
+        --- Cut for brevity ---
+		"36": "VS_1P",
+		"37": "VS_2P",
+		"38": "VS_3P",
+		"39": "VS_4P",
+        --- Cut for brevity ---
+		"47": "VS_2K",
+		"48": "VS_3K"
+    }
+}
+```
+
 ---
 
 Tl;dr: Pick your base config file; upload it to your board, then rename it as `config.json`. Edit it with your favorite text editor to map your inputs. If you're on Windows and can't see the `.json` file extension, [blame Microsoft](https://support.microsoft.com/en-us/windows/common-file-name-extensions-in-windows-da4a4430-8e76-89c5-59f7-1cdbbc75cb01). <sub>Really this decision leads to way more backdoors than you think it does</sub>
