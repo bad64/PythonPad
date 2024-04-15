@@ -1,3 +1,9 @@
+150424: (No testing needed)
+- README.md:
+    - Added a warning pertaining to the *very* strange issue this fw has with Tekken (or the other way around, it's not clear yet)
+- configs/README.md:
+    - Added a crude description of all the properties each config section can, should, and must have
+
 140424: (rolled over from previous commit; I need to stop coding late at night...)
 - code.py:
 	- Removed 130424's watchdog related code; the d/cs are from a *different* watchdog (pending investigation)

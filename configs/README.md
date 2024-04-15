@@ -5,7 +5,27 @@ Here's the main config files I've written for the couple of MCUs I tested !
 
 If you want to change an input, pick a pin, then write a value based on the table below. Save the file; CircuitPython should automatically reload everything and you're good to go. For the Versus mode, you can use dedicated macros that correspond to a traditional arcade controller input scheme using the prefix "VS\_" (i.e.: VS\_1P, VS\_2K and so forth)
 
-## Valid inputs
+# Sections
+
+## General
+
+If you're missing this section, the firmware will assume a lot of default stuff. It'll still *work* though. All of these properties are *technically* optional:
+
+- `debugMode`: Turns on debug mode. This is probably useless to you as an end user. True or false, defaults to false
+- `defaultMode`: The default mode in which the firmware starts up. Said mode **must** be defined in the "modes" section. Defaults to "smash"
+
+## Modes
+
+If you're missing this, nothing changes. You just won't be able to select a mode at boot time
+All key/value pairs are user defined and there is no set standard; I recommend defining at least one key to boot into `bootloader` mode. All pin numbers **must** be made of two digits (e.g. pin "07" instead of "7").
+
+## Every user-definable mode
+
+You need at least one. I would recommend defining a `smash` section at least due to the firmware defaulting to it.
+
+- `canonName`: Optional. Gives your config a more verbose name for debugging purposes. No use for an end user
+- `socdType`: Optional. Sets the cleaning type to use for this config. Accepts "LRN" (for Left+Right=Neutral), and any of "LIW", "lastInputWins", "last" for Last Input Wins (duh). Defaults to "LRN"
+- Pin numbers: Mandatory. Ties a pin to a host-side input (so technically an output from the firmware's perspective). Multiple pins can be tied to the same input. See chart below for accepted values:
 
 | Inputs | Inputs | Inputs | Inputs |
 | --- | --- | --- | --- |

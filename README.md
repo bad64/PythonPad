@@ -5,6 +5,10 @@
 This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) and [Gnome](https://github.com/bad64/OpenFightStick/tree/main/Gnome) controllers !  
 
 > [!IMPORTANT]
+> As of this writing, there is an issue where Tekken 8, and *only* Tekken 8, will conflate two or more instances of this firmware into the same controller for some reason.  
+> I do not like writing this, but this does not appear to be an issue on the firmware side. Not sure how it can be mitigated on my end, but I'm looking into it.
+
+> [!IMPORTANT]
 > DISCLAIMER
 >
 > Due to the sheer variety in rulesets, what they allow and forbid, TO bias, and so forth, *I cannot guarantee your box will at all times be able to comply with every ruleset.* Compliance is therefore left to the care of the end user (aka you, most likely). I will not take the blame for rule infringement, regarding neither the software (this repo), the board, or its physical enclosure.
