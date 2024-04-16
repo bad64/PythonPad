@@ -4,7 +4,7 @@
 
 This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) and [Gnome](https://github.com/bad64/OpenFightStick/tree/main/Gnome) controllers !  
 
-> [!IMPORTANT]
+> [!CAUTION]
 > As of this writing, there is an issue where Tekken 8, and *only* Tekken 8, will conflate two or more instances of this firmware into the same controller for some reason.  
 > I do not like writing this, but this does not appear to be an issue on the firmware side. Not sure how it can be mitigated on my end, but I'm looking into it.
 
@@ -13,7 +13,7 @@ This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/mai
 >
 > Due to the sheer variety in rulesets, what they allow and forbid, TO bias, and so forth, *I cannot guarantee your box will at all times be able to comply with every ruleset.* Compliance is therefore left to the care of the end user (aka you, most likely). I will not take the blame for rule infringement, regarding neither the software (this repo), the board, or its physical enclosure.
 > 
-> Basically if you show up at a major and TOs send you packing because your controller breaks stuff, it's a **Skill Issue** on your end. Consider yourselves warned &#x2665;&#xfe0f;  
+> Basically if you show up at a major and TOs send you packing because your controller breaks stuff, it's a **Skill Issue** on your end. Consider yourselves warned :heart:  
 > <sup>Generally I would just create a per-ruleset config file but you do you</sub>
 
 ## What it do
@@ -125,9 +125,9 @@ A: I *might*. Currently I'm developing this for an ESP32-S3 based board and I al
 
 ## TODO
 
-- Clean up the code and make it more Pythonic
-- Tutorial on how to create config files/Full-on user manual
-- Maybe a configurator on a separate repo ?
+- [x] Clean up the code and make it more Pythonic
+- [x] Tutorial on how to create config files/Full-on user manual
+- [ ] Maybe a configurator on a separate repo ?
 
 [^1]: I do miss pointers though...
 [^2]: It works pretty well on Tekken 8 too !
