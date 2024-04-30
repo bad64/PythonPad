@@ -5,7 +5,7 @@ import time
 
 from adafruit_hid import find_device
 
-from uart import INFO, ACTION, ERROR, OK, KO
+from uart import RED, YELLOW, GREEN, CYAN, BLUE, VIOLET, DEFAULT, INFO, ACTION, ERROR, OK, KO
 
 # Report structure
 REPORT_SIZE = 8
@@ -29,32 +29,41 @@ HAT_DOWN_LEFT = 5
 HAT_LEFT = 6
 HAT_UP_LEFT = 7
 
+# General functions
+def range_map(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
+
+def fits_in_1b(value):
+    a = bytearray(1)
+    try:
+        struct.pack_into("<B", a, 0, value)
+        return "Fits in 1 byte"
+    except:
+        return "Doesn't fit in 1 byte ??"
+
+def fits_in_2b(value):
+    a = bytearray(2)
+    try:
+        struct.pack_into("<H", a, 0, value)
+        return "Fits in 2 bytes"
+    except:
+        return "Doesn't fit in 2 bytes ??"
+
 class Gamepad:
-    def __init__(self, devices):
+    def __init__(self, devices, xinput=False):
         print(f"{ACTION()} Creating Gamepad device ", end="")
+        self._xinput = xinput
         try:
             self._gamepad_device = find_device(devices, usage_page=0x1, usage=0x05)
             print(f"{OK()}")
         except Exception as e:
             print(f"{KO()}")
-
-        # report[0] buttons 1-8
-        # report[1] buttons 9-16
-        # report[2] hat switch
-        # report[3] joystick 0 x
-        # report[4] joystick 0 y
-        # report[5] joystick 1 x
-        # report[6] joystick 1 y
-        print(f"{ACTION()} Initializing report struct ", end="")
-        try:
-            self._report = bytearray(8)
-            print(f"{OK()}")
-        except Exception as e:
-            print(f"{KO()}")
-
-        # Remember the last report as well, so we can avoid sending
-        # duplicate reports.
-        self._last_report = bytearray(8)
+            if "message" in dir(e):
+                print(f"{ERROR()}{e.message}")
+            else:
+                print(f"{ERROR()}{e}")
+            while True:
+                print("\r", end="")
 
         # Set SOCD info
         self._socd = "LRN"
@@ -68,6 +77,38 @@ class Gamepad:
         self._joy_y = 127
         self._joy_z = 127
         self._joy_rz = 127
+
+        if not xinput:
+            # report[0] buttons 1-8
+            # report[1] buttons 9-16
+            # report[2] hat switch
+            # report[3] joystick 0 x
+            # report[4] joystick 0 y
+            # report[5] joystick 1 x
+            # report[6] joystick 1 y
+            print(f"{ACTION()} Initializing report struct ", end="")
+            try:
+                self._report = bytearray(8)
+                print(f"{OK()}")
+            except Exception as e:
+                print(f"{KO()}")
+
+            # Remember the last report as well, so we can avoid sending
+            # duplicate reports.
+            self._last_report = bytearray(8)
+
+        elif xinput:
+            # report[0] Y X B A View Menu Ignore Ignore
+            # report[1] Ignore Ignore Next Prev Right Left Down Up
+            # report[2-12] Reserved
+            print(f"{ACTION()} Initializing report struct ", end="")
+            try:
+                self._report = bytearray(12)
+                print(f"{OK()}")
+            except Exception as e:
+                print(f"{KO()}")
+
+            self._last_report = bytearray(12)
 
         # Send an initial report to test if HID device is ready.
         # If not, wait a bit and try once more.
@@ -93,6 +134,7 @@ class Gamepad:
         print(f"{INFO()} Gamepad init success !")
 
     def crashdump(self, report=None, e=None):
+        print("")
         print("=====GURU MEDITATION=====")
 
         print(f"Buttons:    {RED}", end="")
@@ -236,18 +278,31 @@ class Gamepad:
         self.send(always=True)
 
     def send(self, always=False):
-        # Some weird bit alignment issue makes splitting the button array required
-        buttons1 = self._buttons_state >> 8
-        buttons2 = ((self._buttons_state << 0) & ((1 << 8) - 1))
+        if self._xinput == False:
+            # Some weird bit alignment issue makes splitting the button array required
+            buttons1 = self._buttons_state >> 8
+            buttons2 = ((self._buttons_state << 0) & ((1 << 8) - 1))
 
-        try:
-            struct.pack_into("<BBBBBBBB", self._report, 0, buttons2, buttons1, self._hat, self._joy_x, self._joy_y, self._joy_z, self._joy_rz, 0b00000000,)
-        except Exception as e:
-            self.crashdump(None, e)
+            try:
+                struct.pack_into("<BBBBBBBB", self._report, 0, buttons2, buttons1, self._hat, self._joy_x, self._joy_y, self._joy_z, self._joy_rz, 0b00000000,)
+            except Exception as e:
+                self.crashdump(None, e)
 
-        try:
-            if always or self._last_report != self._report:
-                self._gamepad_device.send_report(self._report)
-                self._last_report[:] = self._report
-        except Exception as e:
-            self.crashdump(self._report, e)
+            try:
+                if always or self._last_report != self._report:
+                    self._gamepad_device.send_report(self._report)
+                    self._last_report[:] = self._report
+            except Exception as e:
+                self.crashdump(self._report, e)
+        elif self._xinput == True:
+            try:
+                struct.pack_into("<BBBBBBBBBBBB", self._report, 0, buttons2, buttons1, self._hat, self._joy_x, self._joy_y, self._joy_z, self._joy_rz, 0b00000000, 0x0, 0x0, 0x0, 0x0)
+            except Exception as e:
+                self.crashdump(None, e)
+
+            try:
+                if always or self._last_report != self._report:
+                    self._gamepad_device.send_report(self._report)
+                    self._last_report[:] = self._report
+            except Exception as e:
+                self.crashdump(self._report, e)
