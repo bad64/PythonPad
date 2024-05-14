@@ -1,5 +1,4 @@
 ## Note: I strongly recommend not touching either of these sections, if you need to change what a given button does, go through config.json instead
-
 LEGACY_REPORT_DESCRIPTOR = bytes((
     0x05 ,  0x01 ,          #    USAGE_PAGE (Generic Desktop)
     0x09 ,  0x05 ,          #    USAGE (Game Pad)
@@ -77,11 +76,3 @@ MASK_L1 =           0b0000000000010000
 MASK_R1 =           0b0000000000100000
 MASK_L2 =           0b0000000001000000
 MASK_R2 =           0b0000000010000000
-MASK_SELECT =       0b0000000100000000
-MASK_START =        0b0000001000000000
-MASK_L3 =           0b0000010000000000
-MASK_R3 =           0b0000100000000000
-MASK_HOME =         0b0001000000000000
-MASK_CAPTURE =      0b0010000000000000
-MASK_UNUSED1 =      0b0100000000000000
-MASK_UNUSED2 =      0b1000000000000000

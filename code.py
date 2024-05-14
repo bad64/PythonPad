@@ -56,14 +56,14 @@ MIN_TILT = 1
 CENTER = 127
 MAX_TILT = 254
 
+# Import bitmasks
 from legacy import *
 
 # Defining a pin prefix
-## TODO: Add more board defs
-prefix = "GP"
-if "adafruit_feather_esp32s3" in board.board_id:
+prefix = "GP"                                       # RP2040, default
+if "adafruit_feather_esp32s3" in board.board_id:    # Feather ESP32-S3
     prefix = "D"
-elif "espressif_esp32s3" in board.board_id:
+elif "espressif_esp32s3" in board.board_id:         # Espressif ESP32-S3/One Board
     prefix = "IO"
 
 # Define a mapping interface
@@ -80,17 +80,14 @@ class Mapping:
         with countio.Counter(self.pin, edge=countio.Edge.FALL, pull=digitalio.Pull.UP) as interrupt:
             while True:
                 if interrupt.count > 0:
-                    if not self.locked:
-                        interrupt.reset()
-                        buffer &= self.mask
-                        self.lock()
-                        if debugMode:
-                            print(f"{DEBUG()} Pressed {self.name}")
+                    buffer &= self.mask
+                    if debugMode:
+                        print(f"{DEBUG()} Pressed {self.name}")
                 else:
-                    interrupt.reset()
                     buffer ^= self.mask
-                    self.unlock()
+                interrupt.reset()
                 await asyncio.sleep_ms(0)
+    # Locks are mostly for uart printing at the moment
     def lock(self):
         self.locked = True
     def unlock(self):
@@ -242,12 +239,13 @@ print(f"{ACTION()} Loading config: \"{GREEN}{mode}{DEFAULT}\"")
 
 buttons = 0
 leftanalog = 0
+rightanalog = 0
 
 for k,v in cfg[mode].items():
     if k == "EXTRAS":
         pass
     else:
-        if "MOD_" in k:
+        if "MOD_" in k or k in [ "START", "SELECT", "HOME", "L3", "R3" ]:
             exec(f"MAP_{k} = SpecialButton(v, k)")
         else:
             exec(f"MAP_{k} = Mapping(v, k)")
@@ -259,7 +257,8 @@ try:
     except KeyError:
         runtime_file = mode
     print(f"{ACTION()} Importing main loop functions from {runtime_file}.py... ", end="")
-    exec(f"from {runtime_file} import check_import, register_buttons, register_leftanalog, register_rightanalog, process_buttons, process_leftanalog, process_rightanalog")
+    #exec(f"from {runtime_file} import check_import, register_buttons, register_leftanalog, register_rightanalog, process_buttons, process_leftanalog, process_rightanalog")
+    exec(f"from {runtime_file} import check_import, register_buttons, register_leftanalog, register_rightanalog")
     if check_import() == True:
         print(f"[{GREEN}OK{DEFAULT}]")
     else:
@@ -293,15 +292,27 @@ if has_server:
 async def main():
     # Register all the buttons
     buttons_task = []
-    register_buttons(buttons_task, buttons)
+
+    MAP_CROSS.register(buttons_task, buttons)
+
+    # Register left stick
+    leftanalog_task = []
+
+    MAP_LEFT.register(leftanalog_task, leftanalog)
 
     while True:
         try:
-            # Handle action buttons
+            # Handle options
+
+            # Handle main buttons
             for task in buttons_task:
                 await asyncio.gather(task)
 
             gp.set_buttons(buttons)
+
+            # Handle directions
+            for task in leftanalog_task:
+                await asyncio.gather(task)
 
             # Finally send the report, yay !
             gp.send()
@@ -321,7 +332,6 @@ async def main():
         except WatchDogTimeout as e:
             if debugMode:
                 print(f"{DEBUG()} {e}")
-        # TODO: Define other runtime exceptions ?
 
 # We're good to go, enter loop
 print(f"{ACTION()} {GREEN}All systems go ! Entering main loop !{DEFAULT}")
