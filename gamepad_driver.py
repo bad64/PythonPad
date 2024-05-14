@@ -214,6 +214,9 @@ class Gamepad:
         if e:
             raise e
 
+    def set_buttons(self, value):
+        self._buttons_state = value
+
     def reset_buttons(self):
         self._buttons_state = 0
 

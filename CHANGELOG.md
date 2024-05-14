@@ -1,3 +1,8 @@
+1.0.1 (May 14th 2024):
+Staging commit
+- Lots of work done towards making button checks asynchronous and safe
+- Reworked the config file structure (documentation will be written once I'm done)
+
 1.0 (April 30 2024):
 
 - Initial full release

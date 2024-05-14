@@ -13,6 +13,7 @@ except:
 # CircuitPython imports
 import asyncio
 import board
+import countio
 import digitalio
 import json
 import microcontroller
@@ -65,33 +66,51 @@ if "adafruit_feather_esp32s3" in board.board_id:
 elif "espressif_esp32s3" in board.board_id:
     prefix = "IO"
 
-# Anthropomorphic definition of a Button
-class Button:
-    def __init__(self, pin, mappedInput):
-        # Declares a Button, with its associated pin and output
-        self._pins = [ int(pin) ]
-        try:
-            self._mask = eval("MASK_{}".format(mappedInput))
-        except:
-            self._mask = None
-        self._io = [ eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(pin))) ]
-        self._io[0].switch_to_input()
-        self._io[0].pull = digitalio.Pull.UP
-    def addPin(self, pin):
-        # Adds a pin to poll for a given input (allows for tying multiple keys to the same function)
-        self._pins.append(pin)
-        self._io.append(eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(pin))))
-        self._io[-1].switch_to_input()
-        self._io[-1].pull = digitalio.Pull.UP
-    def read(self):
-        # Returns the state of the button
-        for io in self._io:
-            if io.value == False:
-                return LOW
+# Define a mapping interface
+class Mapping:
+    def __init__(self, pin, name):
+        self.pin_number = pin
+        self.pin = eval(f"board.{prefix}{pin}")
+        self.name = name
+        self.locked = False
+        self.class_name = "MAP_".join(name.upper())
+        self.mask = eval(f"MASK_{name.upper()}")
+        print(f"{INFO()} Bound pin {GREEN}{self.pin_number}{DEFAULT} to {CYAN}{self.name}{DEFAULT}")
+    async def scan(self, buffer):
+        with countio.Counter(self.pin, edge=countio.Edge.FALL, pull=digitalio.Pull.UP) as interrupt:
+            while True:
+                if interrupt.count > 0:
+                    if not self.locked:
+                        interrupt.reset()
+                        buffer &= self.mask
+                        self.lock()
+                        if debugMode:
+                            print(f"{DEBUG()} Pressed {self.name}")
+                else:
+                    interrupt.reset()
+                    buffer ^= self.mask
+                    self.unlock()
+                await asyncio.sleep_ms(0)
+    def lock(self):
+        self.locked = True
+    def unlock(self):
+        self.locked = False
+    def register(self, taskbuffer, inputbuffer):
+        taskbuffer.append(asyncio.create_task(self.scan(inputbuffer)))
+        if debugMode:
+            print(f"{DEBUG()} Registered async scan function for {self.name}")
+
+class SpecialButton:
+    def __init__(self, pin, name):
+        self.pin = pin
+        self.name = name
+        self.class_name = "MAP_".join(name.upper())
+        self._io = eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(pin)))
+        print(f"{INFO()} Bound pin {GREEN}{self.pin}{DEFAULT} to {CYAN}{self.name}{DEFAULT}")
+    def is_pressed(self):
+        if self._io.value == False:
+            return LOW
         return HIGH
-    def mask(self):
-        # Returns the bitmask attached to the button (Mostly used for debugging purposes)
-        return self._mask
 
 # Parse config from JSON file
 cfg = {}
@@ -147,7 +166,7 @@ warn_user_about_wrong_default_mode = False
 try:
     mode = cfg["general"]["defaultMode"]
 
-    if mode in cfg["modes"].values() and mode != "bootloader":
+    if mode in cfg["modes"].keys() and mode != "bootloader":
         pass
     else:
         raise cre.WrongDefaultModeException(mode)
@@ -160,8 +179,8 @@ except cre.WrongDefaultModeException:
 ## Scan for mode selection
 try:
     for k,v in cfg["modes"].items():
-        b = Button(k, None)
-        if b.read() == LOW:
+        b = eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(v)))
+        if b.value == LOW:
             if v == "bootloader":
                 print(f"{OK()}")
                 print(f"{INFO()} We gotta reboot !")
@@ -170,7 +189,7 @@ try:
                 microcontroller.reset()
             else:
                 mode = v
-        b._io[0].deinit()  # Free the io pin for rebinding later
+        b.deinit()  # Free the io pin for rebinding later
 except Exception as e:
     errorhandler(e)
 
@@ -187,7 +206,7 @@ elif warn_user_about_wrong_default_mode:
     mode = "smash"
 else:
     try:
-        print("\"{}{}{}\" {}".format(GREEN, cfg[mode]["canonName"], DEFAULT, OK()))
+        print("\"{}{}{}\" {}".format(GREEN, cfg[mode]["EXTRAS"]["canonName"], DEFAULT, OK()))
     except KeyError:
         print("\"{}{}{}\" {}".format(GREEN, mode, DEFAULT, OK()))
         if debugMode:
@@ -197,7 +216,7 @@ else:
 print(f"{ACTION()} Setting up SOCD cleaning... ", end="")
 gp.set_socd_type("LRN")     ## Again, default value for safety
 try:
-    gp.set_socd_type(cfg[mode]["socdType"])
+    gp.set_socd_type(cfg[mode]["EXTRAS"]["socdType"])
 
     if mode not in [ "cpt" ]:   # List subject to expansion
         if gp.get_socd_type() in [ "LRN", "last", "LIW", "lastInputWins" ]:
@@ -219,119 +238,19 @@ except cre.WrongSOCDCleaningTypeException as e:
     gp.set_socd_type("LRN")
 
 # Input binding
-AllButtons = { "leftAnalog": {}, "rightAnalog": {}, "modifiers": {}, "buttons": [] }
-
 print(f"{ACTION()} Loading config: \"{GREEN}{mode}{DEFAULT}\"")
 
-## Deal with the modifiers first
-### Save cycles by precalculating tilt values
-xAxisModXDelta = CENTER - round(CENTER * (2/3))
-xAxisModYDelta = CENTER - round(CENTER * (1/3))
-yAxisModXDelta = CENTER - round(CENTER * (2/3))
-yAxisModYDelta = CENTER - round(CENTER * (1/3))
+buttons = 0
+leftanalog = 0
 
 for k,v in cfg[mode].items():
-    if k == "X_AXIS_MOD_X_DELTA":
-        try:
-            xAxisModXDelta = round(int(eval(v)))
-            print(f"{INFO()} Set X axis MOD_X delta to {round(eval(v))}")
-        except Exception as e:
-            if 'message' in dir(e):
-                print(f"{ERROR()} {RED}Cannot set X axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
-            else:
-                print(f"{ERROR()} {RED}Cannot set X axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
-    elif k == "X_AXIS_MOD_Y_DELTA":
-        try:
-            xAxisModYDelta = round(int(eval(v)))
-            print(f"{INFO()} Set X axis MOD_Y delta to {round(eval(v))}")
-        except Exception as e:
-            if 'message' in dir(e):
-                print(f"{ERROR()} {RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
-            else:
-                print(f"{ERROR()} {RED}Cannot set X axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
-    elif k == "Y_AXIS_MOD_X_DELTA":
-        try:
-            yAxisModXDelta = round(int(eval(v)))
-            print(f"{INFO()} Set Y axis MOD_X delta to {round(eval(v))}")
-        except Exception as e:
-            if 'message' in dir(e):
-                print(f"{ERROR()} {RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e.message}{DEFAULT}")
-            else:
-                print(f"{ERROR()} {RED}Cannot set Y axis MOD_X delta value to \"{v}\": {e}{DEFAULT}")
-    elif k == "Y_AXIS_MOD_Y_DELTA":
-        try:
-            yAxisModYDelta = round(int(eval(v)))
-            print(f"{INFO()} Set Y axis MOD_Y delta to {round(eval(v))}")
-        except Exception as e:
-            if 'message' in dir(e):
-                print(f"{ERROR()} {RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e.message}{DEFAULT}")
-            else:
-                print(f"{ERROR()} {RED}Cannot set Y axis MOD_Y delta value to \"{v}\": {e}{DEFAULT}")
-
-## Printing axis values over UART just to be sure nothing is on fire
-if debugMode and mode == "smash":
-    print(f"{DEBUG()} X axis values:")
-    print(f"{DEBUG()}   ModX delta:     {xAxisModXDelta}")
-    print(f"{DEBUG()}   ModY delta:     {xAxisModYDelta}")
-    print(f"{DEBUG()}   LEFT:           {MIN_TILT}")
-    print(f"{DEBUG()}   LEFT MOD_X:     {round(CENTER - xAxisModXDelta)}")
-    print(f"{DEBUG()}   LEFT MOD_Y:     {round(CENTER - xAxisModYDelta)}")
-    print(f"{DEBUG()}   CENTER:         {CENTER}")
-    print(f"{DEBUG()}   RIGHT MOD_Y:    {round(CENTER + xAxisModYDelta)}")
-    print(f"{DEBUG()}   RIGHT MOD_X:    {round(CENTER + xAxisModXDelta)}")
-    print(f"{DEBUG()}   RIGHT:          {MAX_TILT}")
-
-    print(f"{DEBUG()} Y axis values:")
-    print(f"{DEBUG()}   ModX delta:     {yAxisModXDelta}")
-    print(f"{DEBUG()}   ModY delta:     {yAxisModYDelta}")
-    print(f"{DEBUG()}   UP:             {MIN_TILT}")
-    print(f"{DEBUG()}   UP MOD_X:       {round(CENTER - yAxisModXDelta)}")
-    print(f"{DEBUG()}   UP MOD_Y:       {round(CENTER - yAxisModYDelta)}")
-    print(f"{DEBUG()}   CENTER:         {CENTER}")
-    print(f"{DEBUG()}   DOWN MOD_Y:     {round(CENTER + yAxisModYDelta)}")
-    print(f"{DEBUG()}   DOWN MOD_X:     {round(CENTER + yAxisModXDelta)}")
-    print(f"{DEBUG()}   DOWN:           {MAX_TILT}")
-
-## Now the rest of the inputs
-for k,v in cfg[mode].items():
-    try:
-        int(k)  # If the key isn't an int, it *has* to be a modifier value;
-                # We have already dealt with those above so we catch the exception
-                # and skip over to the next item in line
-        if v != "None":
-            if v in [ "UP", "DOWN", "LEFT", "RIGHT" ]:
-                try:
-                    AllButtons["leftAnalog"][v].addPin(k)
-                except KeyError:
-                    AllButtons["leftAnalog"][v] = Button(k, v)
-            elif v in [ "C_UP", "C_DOWN", "C_LEFT", "C_RIGHT" ]:
-                # We don't specifically catch those in versus mode
-                # because we just don't parse for right stick inputs
-                # ...
-                # Not that it would hurt to do so !
-                try:
-                    AllButtons["rightAnalog"][v].addPin(k)
-                except KeyError:
-                    AllButtons["rightAnalog"][v] = Button(k, v)
-            elif v in [ "MOD_X", "MOD_Y", "MOD_V", "MOD_W" ]:
-                try:
-                    AllButtons["modifiers"][v].addPin(k)
-                except KeyError:
-                    AllButtons["modifiers"][v] = Button(k, v) 
-            else:
-                    AllButtons["buttons"].append(Button(k, v))
-            if debugMode == True:
-                print(f"{INFO()} Bound key \"{GREEN}{v}{DEFAULT}\" to input on pin {BLUE}{k}{DEFAULT}")
-    except ValueError as e:
-        # This is expected behaviour; we merely hide it to the UART interface
-        # See beginning of the try/except block
+    if k == "EXTRAS":
         pass
-    except Exception as e:
-        # Another exception has occured; we catch that and show
-        # TODO: Maybe determine if the exception is recoverable ?
-        if debugMode == True:
-            print(f"{WARN()} Attempted to bind key \"{v}\" to pin {k} but failed")
-            print(f"{WARN()} {type(e)}: {e}")
+    else:
+        if "MOD_" in k:
+            exec(f"MAP_{k} = SpecialButton(v, k)")
+        else:
+            exec(f"MAP_{k} = Mapping(v, k)")
 
 # Import functions from the appropriate file
 try:
@@ -340,7 +259,7 @@ try:
     except KeyError:
         runtime_file = mode
     print(f"{ACTION()} Importing main loop functions from {runtime_file}.py... ", end="")
-    exec(f"from {runtime_file} import check_import, directionals")
+    exec(f"from {runtime_file} import check_import, register_buttons, register_leftanalog, register_rightanalog, process_buttons, process_leftanalog, process_rightanalog")
     if check_import() == True:
         print(f"[{GREEN}OK{DEFAULT}]")
     else:
@@ -371,34 +290,18 @@ if has_server:
         print(f"{ERROR()} {RED}Local server failed to start !!{DEFAULT}")
         errorhandler(e)
 
-# Define action button polling as asynchronous to the main loop
-#async def poll_buttons():
-def poll_buttons():
-    for b in AllButtons["buttons"]:
-        if b.read() == LOW:
-            gp.press_button(b.mask())
-    #await asyncio.sleep_ms(0)
+async def main():
+    # Register all the buttons
+    buttons_task = []
+    register_buttons(buttons_task, buttons)
 
-#async def main():
-def main():
     while True:
         try:
-            # Buttons
-            ## This is shared between all modes, don't touch it
-            gp.reset_buttons()
-            #await asyncio.gather(poll_buttons())
-            poll_buttons()
+            # Handle action buttons
+            for task in buttons_task:
+                await asyncio.gather(task)
 
-            # Handle directional input in separate files for easier readability
-            x = CENTER
-            y = CENTER
-            z = CENTER
-            rz = CENTER
-
-            ## TODO: de-fuglify this call smh
-            directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
-                    HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
-                    CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta)
+            gp.set_buttons(buttons)
 
             # Finally send the report, yay !
             gp.send()
@@ -422,5 +325,4 @@ def main():
 
 # We're good to go, enter loop
 print(f"{ACTION()} {GREEN}All systems go ! Entering main loop !{DEFAULT}")
-#asyncio.run(main())
-main()
+asyncio.run(main())

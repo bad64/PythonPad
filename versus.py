@@ -7,116 +7,26 @@ def check_import():
     # Canary function to check if the import went okay
     return True
 
-def safe_test(cfg, btn):
-    # Testing function to be used for buttons that *may or may not* be present in the config file
-    # In Versus mode you shouldn't need this ever, but...
-    # Y'know, there are a couple unused button masks in code.py... wink wink nudge nudge
-    for item in cfg:
-        try:
-            return item[btn].read()
-        except:
-            pass
-    return False
+def register_buttons(buttons_task, buttons):
+    # Register proxy asynchronous functions to poll buttons
+    exec(f"MAP_CIRCLE.register({buttons_task}, {buttons})")
+    exec(f"MAP_CROSS.register({buttons_task}, {buttons})")
+    exec(f"MAP_SQUARE.register({buttons_task}, {buttons})")
+    exec(f"MAP_TRIANGLE.register({buttons_task}, {buttons})")
+    exec(f"MAP_L1.register({buttons_task}, {buttons})")
+    exec(f"MAP_R1.register({buttons_task}, {buttons})")
+    exec(f"MAP_L2.register({buttons_task}, {buttons})")
+    exec(f"MAP_R2.register({buttons_task}, {buttons})")
+    exec(f"MAP_HOME.register({buttons_task}, {buttons})")
+    exec(f"MAP_START.register({buttons_task}, {buttons})")
+    exec(f"MAP_SELECT.register({buttons_task}, {buttons})")
+    exec(f"MAP_L3.register({buttons_task}, {buttons})")
+    exec(f"MAP_R3.register({buttons_task}, {buttons})")
 
-def directionals(gp, AllButtons, x, y, z, rz, LOW, HIGH, \
-        HAT_CENTER, HAT_UP, HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT, HAT_DOWN, HAT_DOWN_LEFT, HAT_LEFT, HAT_UP_LEFT, \
-        CENTER, MIN_TILT, MAX_TILT, xAxisModXDelta, xAxisModYDelta, yAxisModXDelta, yAxisModYDelta):
-    # Set all analogs to center and leave'em here
-    gp.set_lsx(x)
-    gp.set_lsy(y)
-    gp.set_rsx(z)
-    gp.set_rsy(rz)
+def register_leftanalog():
+    #TODO
+    pass
 
-    # Dpad
-    ## Left+Right=Neutral
-    if gp.get_socd_type() == "LRN":
-        if AllButtons["leftAnalog"]["UP"].read() == LOW:
-            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                gp.set_dpad(HAT_UP_LEFT)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                gp.set_dpad(HAT_UP)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                gp.set_dpad(HAT_UP)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                gp.set_dpad(HAT_UP_RIGHT)
-        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
-            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                gp.set_dpad(HAT_LEFT)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                gp.set_dpad(HAT_CENTER)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                gp.set_dpad(HAT_CENTER)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                gp.set_dpad(HAT_RIGHT)
-        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == LOW:
-            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                gp.set_dpad(HAT_DOWN_LEFT)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                gp.set_dpad(HAT_DOWN)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                gp.set_dpad(HAT_DOWN)
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                gp.set_dpad(HAT_DOWN_RIGHT)
-    ## Last Input Wins
-    elif gp.get_socd_type() in [ "last", "LIW", "lastInputWins" ]:
-        # Get current dpad state
-        dpad_lastframe = gp.get_dpad()
-        x_axis_tmp = SOCD_NEUTRAL
-        if dpad_lastframe in [ HAT_UP_LEFT, HAT_LEFT, HAT_DOWN_LEFT ]:
-            x_axis_tmp = SOCD_LEFT
-        elif dpad_lastframe in [ HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT ]:
-            x_axis_tmp = SOCD_RIGHT
-
-        # Are both opposite X axis inputs pressed ?
-        if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-            # Are we locked ?
-            if gp.get_socd_lock() == True:
-                # Do nothing
-                pass
-            elif gp.get_socd_lock() == False:
-                # Who's on first ?
-                if dpad_lastframe in [ HAT_UP_LEFT, HAT_LEFT, HAT_DOWN_LEFT ]:
-                    x_axis_tmp = SOCD_RIGHT     # We right now
-                elif dpad_lastframe in [ HAT_UP_RIGHT, HAT_RIGHT, HAT_DOWN_RIGHT ]:
-                    x_axis_tmp = SOCD_LEFT      # We left now
-                else:
-                    x_axis_tmp = SOCD_NEUTRAL
-                
-                # Then lock
-                if gp.get_socd_lock() == False:
-                    gp.lock_socd()
-        else:
-            # Unlock if needed
-            if gp.get_socd_lock() == True:
-                gp.unlock_socd()
-
-            # Scan buttons as usual
-            if AllButtons["leftAnalog"]["LEFT"].read() == LOW and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                x_axis_tmp = SOCD_LEFT
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == HIGH:
-                x_axis_tmp = SOCD_NEUTRAL
-            elif AllButtons["leftAnalog"]["LEFT"].read() == HIGH and AllButtons["leftAnalog"]["RIGHT"].read() == LOW:
-                x_axis_tmp = SOCD_RIGHT
-
-        # Do a flip, and also Y axis
-        if AllButtons["leftAnalog"]["UP"].read() == LOW:
-            if x_axis_tmp == SOCD_LEFT:
-                gp.set_dpad(HAT_UP_LEFT)
-            elif x_axis_tmp == SOCD_NEUTRAL:
-                gp.set_dpad(HAT_UP)
-            elif x_axis_tmp == SOCD_RIGHT:
-                gp.set_dpad(HAT_UP_RIGHT)
-        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == HIGH:
-            if x_axis_tmp == SOCD_LEFT:
-                gp.set_dpad(HAT_LEFT)
-            elif x_axis_tmp == SOCD_NEUTRAL:
-                gp.set_dpad(HAT_CENTER)
-            elif x_axis_tmp == SOCD_RIGHT:
-                gp.set_dpad(HAT_RIGHT)
-        elif AllButtons["leftAnalog"]["UP"].read() == HIGH and AllButtons["leftAnalog"]["DOWN"].read() == LOW:
-            if x_axis_tmp == SOCD_LEFT:
-                gp.set_dpad(HAT_DOWN_LEFT)
-            elif x_axis_tmp == SOCD_NEUTRAL:
-                gp.set_dpad(HAT_DOWN)
-            elif x_axis_tmp == SOCD_RIGHT:
-                gp.set_dpad(HAT_DOWN_RIGHT)
+def register_rightanalog():
+    #TODO
+    pass

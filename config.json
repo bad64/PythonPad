@@ -1,0 +1,61 @@
+{
+	"general": {
+		"defaultMode": "smash",
+		"socdType": "LRN"
+	},
+	"modes" : {
+		"01": "bootloader",
+		"10": "smash",
+		"11": "versus"
+	},
+	"smash": {
+		"UP": 6,
+		"DOWN": 7,
+		"LEFT": 15,
+		"RIGHT": 4,
+		"A": 11,
+		"B": 21,
+		"X": 47,
+		"Y": 37,
+		"L": 5,
+		"ZL": 36,
+		"R": 48,
+		"ZR": 35,
+		"C_UP": 14,
+		"C_DOWN": 10,
+		"C_LEFT": 13,
+		"C_RIGHT": 12,
+		"HOME": 42,
+		"START": 1,
+		"SELECT": 2,
+		"L3": 40,
+		"R3": 41,
+		"EXTRAS": {
+			"MOD_X": 17,
+			"MOD_Y": 16,
+			"X_AXIS_MOD_X_DELTA": "CENTER * (2/3)",
+			"X_AXIS_MOD_Y_DELTA": "CENTER * (1/3)",
+			"Y_AXIS_MOD_X_DELTA": "CENTER * (1/2)",
+			"Y_AXIS_MOD_Y_DELTA": "CENTER * (1/4)"
+		}
+	},
+	"versus": {
+		"UP": 6,
+		"DOWN": 7,
+		"LEFT": 15,
+		"RIGHT": 4,
+		"CIRCLE": 11,
+		"CROSS": 21,
+		"TRIANGLE": 47,
+		"SQUARE": 37,
+		"L1": 5,
+		"L2": 36,
+		"R1": 48,
+		"R2": 35,
+		"HOME": 42,
+		"START": 1,
+		"SELECT": 2,
+		"L3": 40,
+		"R3": 41
+	}
+}
