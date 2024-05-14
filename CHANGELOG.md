@@ -1,5 +1,5 @@
-1.0.1 (May 14th 2024):
-Staging commit
+1.0.3 (May 14th 2024):
+Intermediary commit (not working)
 - Lots of work done towards making button checks asynchronous and safe
 - Reworked the config file structure (documentation will be written once I'm done)
 

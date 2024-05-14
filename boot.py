@@ -13,7 +13,7 @@ supervisor.set_usb_identification(
 TEST_XINPUT = False
 
 if TEST_XINPUT:
-    from xinput import XINPUT_REPORT_DESCRIPTOR
+    from hid_descriptors import XINPUT_REPORT_DESCRIPTOR
 
     gamepad = usb_hid.Device(
         report_descriptor=XINPUT_REPORT_DESCRIPTOR,
@@ -25,7 +25,7 @@ if TEST_XINPUT:
         xinput=True,
     )
 else:
-    from legacy import LEGACY_REPORT_DESCRIPTOR
+    from hid_descriptors import LEGACY_REPORT_DESCRIPTOR
 
     gamepad = usb_hid.Device(
         report_descriptor=LEGACY_REPORT_DESCRIPTOR,

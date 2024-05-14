@@ -1,4 +1,3 @@
-## Note: I strongly recommend not touching either of these sections, if you need to change what a given button does, go through config.json instead
 LEGACY_REPORT_DESCRIPTOR = bytes((
     0x05 ,  0x01 ,          #    USAGE_PAGE (Generic Desktop)
     0x09 ,  0x05 ,          #    USAGE (Game Pad)
@@ -43,36 +42,53 @@ LEGACY_REPORT_DESCRIPTOR = bytes((
     0xc0                    #  END_COLLECTION
 ))
 
-## General
-MASK_UP =           0b0001
-MASK_DOWN =         0b0010
-MASK_LEFT =         0b0100
-MASK_RIGHT =        0b1000
+XINPUT_REPORT_DESCRIPTOR = bytes((
+    0x05, 0x01,       # Usage Page (Generic Desktop) 
+    0x09, 0x05,       # Usage (Gamepad) \
+    0xA1, 0x01,       # Collection (Application) 
+    0x85, 0x01,       #  Report ID (1 / keystroke) 
 
-## For Smash (or general Switch usage)
-MASK_Y =            0b0000000000000001
-MASK_B =            0b0000000000000010
-MASK_A =            0b0000000000000100
-MASK_X =            0b0000000000001000
-MASK_L =            0b0000000000010000
-MASK_R =            0b0000000000100000
-MASK_ZL =           0b0000000001000000
-MASK_ZR =           0b0000000010000000
-MASK_SELECT =       0b0000000100000000
-MASK_START =        0b0000001000000000
-MASK_L3 =           0b0000010000000000
-MASK_R3 =           0b0000100000000000
-MASK_HOME =         0b0001000000000000
-MASK_CAPTURE =      0b0010000000000000
-MASK_UNUSED1 =      0b0100000000000000      # Note that these are *actually* unused and most games won't let you bind them
-MASK_UNUSED2 =      0b1000000000000000      # joy.cpl sees them though ?
+    # This HID report is used for Windows and non-Windows OS.
+    # Left Thumbstick 
+    0x09, 0x01,       # Usage (Pointer) 
+    0xA1, 0x00,       # Collection (Physical) 
+    0x09, 0x30,       # Usage (X) 
+    0x09, 0x31,       # Usage (Y) 
+    0x15, 0x00,       # Logical Min (0) 
+    0x27, 0xFF, 0xFF, 0x00, 0x00, # Logical Max (0xFFFF) 
+    0x95, 0x02,       # Report Count (2) 
+    0x75, 0x10,       # Report Size (16) 
+    0x81, 0x02,       # Input (Data,Var,Abs) 
+    0xC0,                   # End Collection (Thumbstick) 
 
-## For regular fighting games
-MASK_SQUARE =       0b0000000000000001
-MASK_CROSS =        0b0000000000000010
-MASK_CIRCLE =       0b0000000000000100
-MASK_TRIANGLE =     0b0000000000001000
-MASK_L1 =           0b0000000000010000
-MASK_R1 =           0b0000000000100000
-MASK_L2 =           0b0000000001000000
-MASK_R2 =           0b0000000010000000
+    # Right Thumbstick 
+    0x09, 0x01,       # Usage (Pointer) 
+    0xA1, 0x00,       # Collection (Physical) 
+    0x09, 0x32,       # Usage (Z)  X and Y for Right thumbstick (16-bit) 
+    0x09, 0x35,       # Usage (Rz) 
+    0x15, 0x00,       # Logical Min (0) 
+    0x27, 0xFF, 0xFF, 0x00, 0x00,  # Logical Max (0xFFFF) \
+    0x95, 0x02,       # Report Count (2) 
+    0x75, 0x10,       # Report Size (16) \
+    0x81, 0x02,       # Input (Data,Var,Abs) 
+    0xC0,                   # End Collection (Thumbstick) 
+
+    # Left Trigger 
+    0x05, 0x02,       # Usage Page (Simulation Controls) 
+    0x09, 0xC5,       # Usage (Brake) 
+    0x15, 0x00,       # Logical Min (0) 
+    0x26, 0xFF, 0x03, # Logical Max (0x3FF) 
+    0x95, 0x01,       # Report Count (1) 
+    0x75, 0x0A,       # Report Size (10) 
+    0x81, 0x02,       # Input (Data,Var,Abs) 
+    # Padding 6 bits \
+    0x15, 0x00,       # Logical Min (0) 
+    0x25, 0x00,       # Logical Max (0) 
+    0x75, 0x06,       # Report Size (6) 
+    0x95, 0x01,       # Report Count (1) 
+    0x81, 0x03,       # Input (Constant) 
+
+    # Right Trigger 
+    0x05, 0x02,       # Usage Page (Simulation Controls) 
+    0x09, 0xC4,       # Usage (Accelerator)  
+    0x15, 0x00,       # Logical Min (0) 

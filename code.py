@@ -57,7 +57,7 @@ CENTER = 127
 MAX_TILT = 254
 
 # Import bitmasks
-from legacy import *
+from bitmasks import *
 
 # Defining a pin prefix
 prefix = "GP"                                       # RP2040, default
@@ -67,44 +67,14 @@ elif "espressif_esp32s3" in board.board_id:         # Espressif ESP32-S3/One Boa
     prefix = "IO"
 
 # Define a mapping interface
-class Mapping:
-    def __init__(self, pin, name):
-        self.pin_number = pin
-        self.pin = eval(f"board.{prefix}{pin}")
-        self.name = name
-        self.locked = False
-        self.class_name = "MAP_".join(name.upper())
-        self.mask = eval(f"MASK_{name.upper()}")
-        print(f"{INFO()} Bound pin {GREEN}{self.pin_number}{DEFAULT} to {CYAN}{self.name}{DEFAULT}")
-    async def scan(self, buffer):
-        with countio.Counter(self.pin, edge=countio.Edge.FALL, pull=digitalio.Pull.UP) as interrupt:
-            while True:
-                if interrupt.count > 0:
-                    buffer &= self.mask
-                    if debugMode:
-                        print(f"{DEBUG()} Pressed {self.name}")
-                else:
-                    buffer ^= self.mask
-                interrupt.reset()
-                await asyncio.sleep_ms(0)
-    # Locks are mostly for uart printing at the moment
-    def lock(self):
-        self.locked = True
-    def unlock(self):
-        self.locked = False
-    def register(self, taskbuffer, inputbuffer):
-        taskbuffer.append(asyncio.create_task(self.scan(inputbuffer)))
-        if debugMode:
-            print(f"{DEBUG()} Registered async scan function for {self.name}")
-
-class SpecialButton:
+class Button:
     def __init__(self, pin, name):
         self.pin = pin
         self.name = name
-        self.class_name = "MAP_".join(name.upper())
+        self.mask = eval("MASK_".join(name.upper()))
         self._io = eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(pin)))
         print(f"{INFO()} Bound pin {GREEN}{self.pin}{DEFAULT} to {CYAN}{self.name}{DEFAULT}")
-    def is_pressed(self):
+    def read(self):
         if self._io.value == False:
             return LOW
         return HIGH
@@ -185,7 +155,7 @@ try:
                 microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
                 microcontroller.reset()
             else:
-                mode = v
+                mode = k
         b.deinit()  # Free the io pin for rebinding later
 except Exception as e:
     errorhandler(e)
@@ -243,12 +213,10 @@ rightanalog = 0
 
 for k,v in cfg[mode].items():
     if k == "EXTRAS":
+        # TODO
         pass
     else:
-        if "MOD_" in k or k in [ "START", "SELECT", "HOME", "L3", "R3" ]:
-            exec(f"MAP_{k} = SpecialButton(v, k)")
-        else:
-            exec(f"MAP_{k} = Mapping(v, k)")
+        exec(f"MAP_{k} = Button(v, k)")
 
 # Import functions from the appropriate file
 try:
@@ -257,8 +225,7 @@ try:
     except KeyError:
         runtime_file = mode
     print(f"{ACTION()} Importing main loop functions from {runtime_file}.py... ", end="")
-    #exec(f"from {runtime_file} import check_import, register_buttons, register_leftanalog, register_rightanalog, process_buttons, process_leftanalog, process_rightanalog")
-    exec(f"from {runtime_file} import check_import, register_buttons, register_leftanalog, register_rightanalog")
+    exec(f"from {runtime_file} import check_import, async_buttons")
     if check_import() == True:
         print(f"[{GREEN}OK{DEFAULT}]")
     else:
@@ -290,29 +257,15 @@ if has_server:
         errorhandler(e)
 
 async def main():
-    # Register all the buttons
-    buttons_task = []
-
-    MAP_CROSS.register(buttons_task, buttons)
-
-    # Register left stick
-    leftanalog_task = []
-
-    MAP_LEFT.register(leftanalog_task, leftanalog)
-
     while True:
         try:
+            # Handle main buttons through proxy functions into a buffer
+
+            # Handle left stick with modifiers
+
+            # Handle right stick
+
             # Handle options
-
-            # Handle main buttons
-            for task in buttons_task:
-                await asyncio.gather(task)
-
-            gp.set_buttons(buttons)
-
-            # Handle directions
-            for task in leftanalog_task:
-                await asyncio.gather(task)
 
             # Finally send the report, yay !
             gp.send()
