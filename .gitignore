@@ -1,3 +1,4 @@
 *.swp
 tmp/*
 configs/V1/*
+__pycache__/*

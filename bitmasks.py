@@ -23,6 +23,14 @@ MASK_CAPTURE =      0b0010000000000000
 MASK_UNUSED1 =      0b0100000000000000      # Note that these are *actually* unused and most games won't let you bind them
 MASK_UNUSED2 =      0b1000000000000000      # joy.cpl sees them though ?
 
+### Those aren't actually used as-is and more here to suppress warnings
+MASK_C_UP =         0b0001
+MASK_C_DOWN =       0b0010
+MASK_C_LEFT =       0b0100
+MASK_C_RIGHT =      0b1000
+MASK_MOD_X =        0b1110
+MASK_MOD_Y =        0b1111
+
 ## For regular fighting games
 MASK_SQUARE =       0b0000000000000001
 MASK_CROSS =        0b0000000000000010

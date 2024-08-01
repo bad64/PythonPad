@@ -92,3 +92,5 @@ XINPUT_REPORT_DESCRIPTOR = bytes((
     0x05, 0x02,       # Usage Page (Simulation Controls) 
     0x09, 0xC4,       # Usage (Accelerator)  
     0x15, 0x00,       # Logical Min (0) 
+    0xc0              #  END_COLLECTION
+))
