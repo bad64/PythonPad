@@ -238,25 +238,46 @@ if binding_errors != 0:
         print("\r", end="")
 
 # Pre-compute tilt values
+def tilt_check(reference, value, axis, modifier, orientation):
+    retval = reference
+    try:
+        if reference == value:
+            print("{} Set {} axis MOD {} {} to {}{}{}".format(INFO(), axis, modifier, orientation, GREEN, reference, DEFAULT))
+        else:
+            print("{} Set {} axis MOD {} {} to {}{}{} [{}OVERRIDE{}]".format(INFO(), axis, modifier, orientation, GREEN, value, DEFAULT, YELLOW, DEFAULT))
+            retval = value
+    except ValueError as e:
+        print("{} Invalid value for property {}\"{}_AXIS_MOD_{}_DELTA\"{}: {}".format(ERROR(), RED, axis, modifier, DEFAULT, value))
+        print("{} Defaulting X axis MOD X negative value to {}{}{}".format(INFO(), GREEN, reference, DEFAULT))
+    except KeyError as e:
+        # Do nothing, fail silently, and use defaults
+        pass
+    except Exception as e:
+        if "message" in dir(e):
+            print(f"{ERROR()} {e.message}")
+        else:
+            print(f"{ERROR()} {e}")
+    return retval
+
 tilt_values = {}
 if mode == "smash":
-    print(f"{ACTION()} Pre-computing tilts")
+    print(f"{ACTION()} Pre-computing tilt values")
 
     ## Default values
     tilt_values["X_NEGATIVE"] = MIN_TILT
     tilt_values["X_MOD_X_NEGATIVE"] = ceil(CENTER - (CENTER * (2/3)))
-    tilt_values["X_MOD_Y_NEGATIVE"] = ceil(CENTER - (CENTER * (2/3)))
+    tilt_values["X_MOD_Y_NEGATIVE"] = ceil(CENTER - (CENTER * (1/3)))
     tilt_values["X_CENTER"] = CENTER
     tilt_values["X_MOD_X_POSITIVE"] = floor(CENTER + (CENTER * (2/3)))
-    tilt_values["X_MOD_Y_POSITIVE"] = floor(CENTER + (CENTER * (2/3)))
+    tilt_values["X_MOD_Y_POSITIVE"] = floor(CENTER + (CENTER * (1/3)))
     tilt_values["X_POSITIVE"] = MAX_TILT
 
     tilt_values["Y_NEGATIVE"] = MIN_TILT
     tilt_values["Y_MOD_X_NEGATIVE"] = ceil(CENTER - (CENTER * (2/3)))
-    tilt_values["Y_MOD_Y_NEGATIVE"] = ceil(CENTER - (CENTER * (2/3)))
+    tilt_values["Y_MOD_Y_NEGATIVE"] = ceil(CENTER - (CENTER * (1/3)))
     tilt_values["Y_CENTER"] = CENTER
     tilt_values["Y_MOD_X_POSITIVE"] = floor(CENTER + (CENTER * (2/3)))
-    tilt_values["Y_MOD_Y_POSITIVE"] = floor(CENTER + (CENTER * (2/3)))
+    tilt_values["Y_MOD_Y_POSITIVE"] = floor(CENTER + (CENTER * (1/3)))
     tilt_values["Y_POSITIVE"] = MAX_TILT
 
     # TODO: Refactor this
@@ -264,186 +285,25 @@ if mode == "smash":
     buf_x = cfg["smash"]["EXTRAS"]["X_AXIS_MOD_X_DELTA"]
     buf_y = cfg["smash"]["EXTRAS"]["X_AXIS_MOD_Y_DELTA"]
     ### X axis -, X mod
-    try:
-        if tilt_values["X_MOD_X_NEGATIVE"] == eval(f"ceil(CENTER - ({buf_x}))"):
-            print("{} Set X axis MOD X negative to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_X_NEGATIVE"], DEFAULT))
-        else:
-            print("{} Set X axis MOD X negative to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"ceil(CENTER - ({buf_x}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["X_MOD_X_NEGATIVE"] = eval(f"ceil(CENTER - ({buf_x}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD X negative value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_X_NEGATIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD X negative value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_X_NEGATIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_X_NEGATIVE"] = tilt_check(tilt_values["X_MOD_X_NEGATIVE"], eval(f"ceil(CENTER - ({buf_x}))"), "X", "X", "negative")
     ### X axis -, Y mod
-    try:
-        if tilt_values["X_MOD_Y_NEGATIVE"] == eval(f"ceil(CENTER - ({buf_y}))"):
-            print("{} Set X axis MOD Y negative to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_Y_NEGATIVE"], DEFAULT))
-        else:
-            print("{} Set X axis MOD Y negative to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"ceil(CENTER - ({buf_y}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["X_MOD_Y_NEGATIVE"] = eval(f"ceil(CENTER - ({buf_y}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD Y negative value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_Y_NEGATIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD Y negative value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_Y_NEGATIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        raise e
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_Y_NEGATIVE"] = tilt_check(tilt_values["X_MOD_Y_NEGATIVE"], eval(f"ceil(CENTER - ({buf_y}))"), "X", "Y", "negative")
     ### X axis +, Y mod
-    try:
-        if tilt_values["X_MOD_Y_POSITIVE"] == eval(f"floor(CENTER + ({buf_y}))"):
-            print("{} Set X axis MOD Y positive to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_Y_POSITIVE"], DEFAULT))
-        else:
-            print("{} Set X axis MOD Y positive to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"floor(CENTER + ({buf_y}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["X_MOD_Y_POSITIVE"] = eval(f"floor(CENTER + ({buf_y}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD Y positive value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_Y_POSITIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD Y positive value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_Y_POSITIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_Y_POSITIVE"] = tilt_check(tilt_values["X_MOD_Y_POSITIVE"], eval(f"floor(CENTER + ({buf_y}))"), "X", "Y", "positive")
     ### X axis +, X mod
-    try:
-        if tilt_values["X_MOD_X_POSITIVE"] == eval(f"floor(CENTER + ({buf_x}))"):
-            print("{} Set X axis MOD X positive to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_X_POSITIVE"], DEFAULT))
-        else:
-            print("{} Set X axis MOD X positive to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"floor(CENTER + ({buf_x}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["X_MOD_X_POSITIVE"] = eval(f"floor(CENTER + ({buf_x}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD X positive value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_X_POSITIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"X_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting X axis MOD X positive value to {}{}{}".format(INFO(), BLUE, tilt_values["X_MOD_X_POSITIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_X_POSITIVE"] = tilt_check(tilt_values["X_MOD_X_POSITIVE"], eval(f"floor(CENTER + ({buf_x}))"), "X", "X", "positive")
 
     ## Y axis computation
     buf_x = cfg["smash"]["EXTRAS"]["Y_AXIS_MOD_X_DELTA"]
     buf_y = cfg["smash"]["EXTRAS"]["Y_AXIS_MOD_Y_DELTA"]
     ### Y axis -, X mod
-    try:
-        if tilt_values["Y_MOD_X_NEGATIVE"] == eval(f"ceil(CENTER - ({buf_x}))"):
-            print("{} Set Y axis MOD X negative to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_X_NEGATIVE"], DEFAULT))
-        else:
-            print("{} Set Y axis MOD X negative to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"ceil(CENTER - ({buf_x}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["Y_MOD_X_NEGATIVE"] = eval(f"ceil(CENTER - ({buf_x}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD X negative value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_X_NEGATIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD X negative value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_X_NEGATIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_X_NEGATIVE"] = tilt_check(tilt_values["Y_MOD_X_NEGATIVE"], eval(f"ceil(CENTER - ({buf_x}))"), "Y", "X", "negative")
     ### Y axis -, Y mod
-    try:
-        if tilt_values["Y_MOD_Y_NEGATIVE"] == eval(f"ceil(CENTER - ({buf_y}))"):
-            print("{} Set Y axis MOD Y negative to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_Y_NEGATIVE"], DEFAULT))
-        else:
-            print("{} Set Y axis MOD Y negative to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"ceil(CENTER - ({buf_y}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["Y_MOD_Y_NEGATIVE"] = eval(f"ceil(CENTER - ({buf_y}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD Y negative value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_Y_NEGATIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD Y negative value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_Y_NEGATIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_Y_NEGATIVE"] = tilt_check(tilt_values["Y_MOD_Y_NEGATIVE"], eval(f"ceil(CENTER - ({buf_y}))"), "Y", "Y", "negative")
     ### Y axis +, Y mod
-    try:
-        if tilt_values["Y_MOD_Y_POSITIVE"] == eval(f"floor(CENTER + ({buf_y}))"):
-            print("{} Set Y axis MOD Y positive to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_Y_POSITIVE"], DEFAULT))
-        else:
-            print("{} Set Y axis MOD Y positive to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"floor(CENTER + ({buf_y}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["Y_MOD_Y_POSITIVE"] = eval(f"floor(CENTER + ({buf_y}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD Y positive value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_Y_POSITIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_Y_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD Y positive value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_Y_POSITIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_Y_POSITIVE"] = tilt_check(tilt_values["Y_MOD_Y_POSITIVE"], eval(f"floor(CENTER + ({buf_y}))"), "Y", "Y", "positive")
     ### Y axis +, X mod
-    try:
-        if tilt_values["Y_MOD_X_POSITIVE"] == eval(f"floor(CENTER + ({buf_x}))"):
-            print("{} Set Y axis MOD X positive to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_X_POSITIVE"], DEFAULT))
-        else:
-            print("{} Set Y axis MOD X positive to {}{}{} [{}OVERRIDE{}]".format(INFO(), BLUE, eval(f"floor(CENTER + ({buf_x}))"), DEFAULT, YELLOW, DEFAULT))
-            tilt_values["Y_MOD_X_POSITIVE"] = eval(f"floor(CENTER + ({buf_x}))")
-    except ValueError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD X positive value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_X_POSITIVE"], DEFAULT))
-    except KeyError as e:
-        # Do nothing and use defaults
-        pass
-    except SyntaxError as e:
-        print("{} Invalid value for property {}\"Y_AXIS_MOD_X_DELTA\"{}: {}".format(ERROR(), RED, DEFAULT, buf_x))
-        print("{} Defaulting Y axis MOD X positive value to {}{}{}".format(INFO(), BLUE, tilt_values["Y_MOD_X_POSITIVE"], DEFAULT))
-        raise e
-    except Exception as e:
-        if "message" in dir(e):
-            print(f"{ERROR()} {e.message}")
-        else:
-            print(f"{ERROR()} {e}")
+    tilt_values["X_MOD_X_POSITIVE"] = tilt_check(tilt_values["Y_MOD_X_POSITIVE"], eval(f"floor(CENTER + ({buf_x}))"), "Y", "X", "positive")
 
     for k,v in tilt_values.items():
         tilt_values[k] = int(v)
