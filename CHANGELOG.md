@@ -1,3 +1,11 @@
+1.1.0 (October 30th 2024):
+...Yeah it's been a while
+- Fixed everything that prevented 1.0.3 from working in the first place
+- Expanding on the config:
+	- Smash mode is unchanged
+	- Versus mode now uses PS-style bindings (e.g. "CIRCLE", "SQUARE", etc) due to having practically no overlap with the Switch syntax 
+- Cleaned up the repository to keep it lean (most extras will be redirected elsewhere)
+
 1.0.3 (May 14th 2024):
 Intermediary commit (not working)
 - Lots of work done towards making button checks asynchronous and safe

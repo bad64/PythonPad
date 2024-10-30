@@ -1,0 +1,65 @@
+{
+	"general": {
+		"defaultMode": "smash",
+	},
+	"modes" : {
+		"bootloader": 1,
+		"smash": 15,
+		"versus": 14
+	},
+	"smash": {
+		"UP": 8,
+		"DOWN": 9,
+		"LEFT": 7,
+		"RIGHT": 10,
+		"A": 14,
+		"B": 22,
+		"X": 26,
+		"Y": 21,
+		"L": 6,
+		"R": 27,
+		"ZR": 28,
+		"C_UP": 16,
+		"C_DOWN": 15,
+		"C_LEFT": 13,
+		"C_RIGHT": 17,
+		"HOME": 2,
+		"START": 3,
+		"SELECT": 4,
+		"L3": 1,
+		"R3": 0,
+		"EXTRAS": {
+			"socdType": "LIW",
+			"canonName": "Smash",
+			"MOD_X": 11
+			"MOD_Y": 12
+			"X_AXIS_MOD_X_DELTA": "CENTER * (2/3)",
+			"X_AXIS_MOD_Y_DELTA": "CENTER * (1/3)",
+			"Y_AXIS_MOD_X_DELTA": "CENTER * (1/2)",
+			"Y_AXIS_MOD_Y_DELTA": "CENTER * (1/4)"
+		}
+	},
+	"versus": {
+		"UP": 8,
+		"DOWN": 9,
+		"LEFT": 7,
+		"RIGHT": 10,
+		"CIRCLE": 26,
+		"CROSS": 22,
+		"TRIANGLE": 19,
+		"SQUARE": 18,
+		"L1": 21,
+		"L2": 28,
+		"R1": 20,
+		"R2": 27,
+		"HOME": 2,
+		"START": 3,
+		"SELECT": 4,
+		"L3": 1,
+		"R3": 0,
+		"EXTRAS": {
+			"socdType": "LRN",
+			"canonName": "Versus"
+		}
+	}
+}

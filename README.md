@@ -2,7 +2,7 @@
 
 # CircuitPython based all buttons all purpose (but mostly Smash) controller firmware
 
-This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) and [Gnome](https://github.com/bad64/OpenFightStick/tree/main/Gnome) controllers !  
+This is what powers my [Goblin](https://github.com/bad64/OpenFightStick/tree/main/Goblin) controller !
 
 > [!CAUTION]
 > As of this writing, there is an issue where Tekken 8, and *only* Tekken 8, will conflate two or more instances of this firmware into the same controller for some reason.  
@@ -82,11 +82,10 @@ The firmware will then boot into "Versus mode", which is simply a mode where inp
 Through your config file, you can choose a SOCD cleaning method by assigning a value to the `socdType` property under the "general" section:
 - `"LRN"` (all caps) for **L**eft + **R**ight = **N**eutral
 - `LIW`, `last` or `lastInputWins` for... last input wins
+- `CPT` for the Capcom Pro Tour compliant cleaning (L+R=N, U+D=N)
 
 > [!NOTE]
 > In both cases, Up + Down will **always** resolve to Up !
-
-As of March 30th 2024, I have provided a CPT-compliant config in the `extras/` folder. There's probably going to be a couple more added down the line if and when needed.
 
 ## Updating the firmware
 

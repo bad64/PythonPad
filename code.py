@@ -152,6 +152,8 @@ except cre.WrongDefaultModeException:
 try:
     for k,v in cfg["modes"].items():
         b = eval("digitalio.DigitalInOut(board.{}{})".format(prefix, int(v)))
+        b.switch_to_input()
+        b.pull = digitalio.Pull.UP
         if b.value == LOW:
             if v == "bootloader":
                 print(f"{OK()}")
@@ -243,9 +245,10 @@ def tilt_check(reference, value, axis, modifier, orientation):
     try:
         if reference == value:
             print("{} Set {} axis MOD {} {} to {}{}{}".format(INFO(), axis, modifier, orientation, GREEN, reference, DEFAULT))
+            return reference
         else:
             print("{} Set {} axis MOD {} {} to {}{}{} [{}OVERRIDE{}]".format(INFO(), axis, modifier, orientation, GREEN, value, DEFAULT, YELLOW, DEFAULT))
-            retval = value
+            return value
     except ValueError as e:
         print("{} Invalid value for property {}\"{}_AXIS_MOD_{}_DELTA\"{}: {}".format(ERROR(), RED, axis, modifier, DEFAULT, value))
         print("{} Defaulting X axis MOD X negative value to {}{}{}".format(INFO(), GREEN, reference, DEFAULT))
@@ -257,7 +260,7 @@ def tilt_check(reference, value, axis, modifier, orientation):
             print(f"{ERROR()} {e.message}")
         else:
             print(f"{ERROR()} {e}")
-    return retval
+    return reference
 
 tilt_values = {}
 if mode == "smash":
@@ -297,16 +300,16 @@ if mode == "smash":
     buf_x = cfg["smash"]["EXTRAS"]["Y_AXIS_MOD_X_DELTA"]
     buf_y = cfg["smash"]["EXTRAS"]["Y_AXIS_MOD_Y_DELTA"]
     ### Y axis -, X mod
-    tilt_values["X_MOD_X_NEGATIVE"] = tilt_check(tilt_values["Y_MOD_X_NEGATIVE"], eval(f"ceil(CENTER - ({buf_x}))"), "Y", "X", "negative")
+    tilt_values["Y_MOD_X_NEGATIVE"] = tilt_check(tilt_values["Y_MOD_X_NEGATIVE"], eval(f"ceil(CENTER - ({buf_x}))"), "Y", "X", "negative")
     ### Y axis -, Y mod
-    tilt_values["X_MOD_Y_NEGATIVE"] = tilt_check(tilt_values["Y_MOD_Y_NEGATIVE"], eval(f"ceil(CENTER - ({buf_y}))"), "Y", "Y", "negative")
+    tilt_values["Y_MOD_Y_NEGATIVE"] = tilt_check(tilt_values["Y_MOD_Y_NEGATIVE"], eval(f"ceil(CENTER - ({buf_y}))"), "Y", "Y", "negative")
     ### Y axis +, Y mod
-    tilt_values["X_MOD_Y_POSITIVE"] = tilt_check(tilt_values["Y_MOD_Y_POSITIVE"], eval(f"floor(CENTER + ({buf_y}))"), "Y", "Y", "positive")
+    tilt_values["Y_MOD_Y_POSITIVE"] = tilt_check(tilt_values["Y_MOD_Y_POSITIVE"], eval(f"floor(CENTER + ({buf_y}))"), "Y", "Y", "positive")
     ### Y axis +, X mod
-    tilt_values["X_MOD_X_POSITIVE"] = tilt_check(tilt_values["Y_MOD_X_POSITIVE"], eval(f"floor(CENTER + ({buf_x}))"), "Y", "X", "positive")
+    tilt_values["Y_MOD_X_POSITIVE"] = tilt_check(tilt_values["Y_MOD_X_POSITIVE"], eval(f"floor(CENTER + ({buf_x}))"), "Y", "X", "positive")
 
-    for k,v in tilt_values.items():
-        tilt_values[k] = int(v)
+    #for k,v in tilt_values.items():
+    #    tilt_values[k] = int(v)
 
 # Import functions from the appropriate file
 try:
